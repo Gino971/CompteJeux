@@ -1,0 +1,278 @@
+#yamsTable td.yams-barred-cell {
+  background: #cf0b0b;
+  color: #1a1a1a;
+}
+#yamsTable tr, #yamsTable td, #yamsTable th { height: 30px !important; padding: 0 !important; }
+/* inlined from styles.css (extracted from standalone.html) */
+
+.columns{ display:flex; gap:4px; align-items:flex-start }
+.column{ flex:1; min-width:60px }
+
+.players-table{ width:100%; border-collapse:collapse; margin-top:8px }
+.players-table th, .players-table td{ border:1px solid #ddd; padding:8px; text-align:left }
+.players-table tbody tr{ cursor:pointer }
+.players-table tbody tr:hover{ background:#f6f6f6 }
+
+#addPlayerInput{ width:100%; padding:8px; box-sizing:border-box }
+
+/* layout for add player form */
+#addPlayerForm{ display:flex; gap:8px; align-items:center }
+
+@media(max-width:700px){ .columns{ flex-direction:column } }
+
+/* Topbar: theme-specific definition is below (dark theme) — removed duplicate light variant */
+
+/* push main content below header + topbar */
+header{ position:relative; z-index:40 }
+main{ padding:76px 16px 16px }
+
+.game-actions{ margin:8px 0 }
+.active-game{ margin-top:18px }
+
+/* Tabs */
+.tabs{ display:flex; gap:8px; margin:8px 0; position:fixed; left:0; right:0; top:44px; background:#fff; padding:8px 16px; border-bottom:1px solid #eee; z-index:60 }
+.tab{ background:transparent; border:1px solid #ddd; padding:6px 10px; border-radius:6px; cursor:pointer }
+.tab.active{ background:#2b7cff; color:#fff; border-color:#2b7cff }
+.tabs + #listsTab{ padding-top:64px }
+.board-actions{ margin:8px 0 16px }
+
+/* subtotal rows after each round */
+.subtotal-row td{ font-weight:700; background:rgba(59,130,246,0.06); color:#0b5fff }
+.subtotal-row td:first-child{ font-style:italic; color:#0b5fff; text-align:right; padding-right:12px }
+.subtotal-cell{ text-align:right; color:#0b5fff }
+
+/* footer totals: larger and bold for emphasis */
+#boardTfoot .player-total{ font-weight:800; font-size:16px; color:#cfe0ff }
+#boardTfoot td:first-child{ font-weight:700; font-size:15px; color:#cfe0ff; text-align:left }
+
+/* ensure right alignment overrides table defaults */
+.players-table td.subtotal-cell { text-align: right; color: #0b5fff }
+.players-table tr.subtotal-row td:first-child { text-align: right; padding-right: 12px; color: #0b5fff }
+
+/* make board table use fixed layout */
+#activeGameTableBoard { table-layout: fixed; width: 100%; }
+#activeGameTableBoard th, #activeGameTableBoard td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-sizing: border-box; min-width: 0 }
+#activeGameTableBoard th:first-child, #activeGameTableBoard td:first-child { width: 50px; padding:4px; text-align:center }
+#activeGameTableBoard th:nth-child(n+2), #activeGameTableBoard td:nth-child(n+2) { width: 80px; min-width:80px; max-width:80px; padding:2px 4px }
+
+/* allow horizontal scroll when table wider than container */
+.active-game { overflow-x: auto }
+
+/* force cells to respect fixed layout and hide overflow */
+#activeGameTableBoard th, #activeGameTableBoard td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-sizing: border-box }
+
+/* Ensure Yams table columns are equal width and header aligns with cells */
+#yamsTable { table-layout: fixed; width: auto; }
+#yamsTable th, #yamsTable td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-sizing: border-box; min-width: 0; vertical-align: middle }
+#yamsTable thead th { text-align: center }
+#yamsTable td { padding: 0 4px }
+
+/* Yams column sizes: first column 30px, others 40px */
+#yamsTable th:first-child, #yamsTable td:first-child { width: 140px; }
+#yamsTable th:nth-child(n+2), #yamsTable td:nth-child(n+2) { width: 90px; }
+
+/* Allow Yams cell contents to shrink instead of forcing column width */
+.yams-cell-center { min-width: 0 }
+
+/* Modal: theme-specific version is defined later; duplicate removed */
+
+/* Center header row (player names) in the active game table */
+#activeGameTableBoard thead th { text-align: center }
+
+/* Timer (sablier) styles */
+.timer-container{ display:flex; gap:8px; align-items:center; margin:8px 0 }
+.timer-container .timer-label{ font-size:12px; color:#333 }
+.timer-container input[type="number"]{ width:64px; padding:6px; border-radius:6px; border:1px solid #ddd }
+.timer-display{ display:flex; gap:8px; align-items:center; padding:6px 8px; background:#f3f6ff; border-radius:8px }
+.hourglass{ transition: transform 0.2s linear }
+.hourglass.running{ animation: hg-rotate 1s linear infinite }
+@keyframes hg-rotate{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+.timer-display #timerText{ font-weight:700; color:#0b5fff }
+
+/* Word checker */
+.wordcheck-container{ display:flex; gap:8px; align-items:center }
+.wordcheck-container input{ width:80px; padding:6px; border-radius:6px; border:1px solid rgba(0,0,0,0.08); background:transparent; color:inherit }
+.wordcheck-result-valid{ color:#7efc8d }
+.wordcheck-result-invalid{ color:#ffb4b4 }
+.wordcheck-result-unknown{ color:#ffd77a }
+
+/* Ensure the word-check input keeps a fixed width despite global input[type=text] rules */
+#wordCheckInput{ width:80px; flex:0 0 80px; min-width:80px; max-width:80px; box-sizing:border-box }
+.wordcheck-container .btn{ flex:0 0 auto }
+
+/* Increase wordcheck result size */
+#wordCheckResult .small{ font-size:16px; font-weight:700 }
+#wordCheckResult{ display:block; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Board-only fixed wordcheck area (visible when onglet "Tableau" actif) */
+#boardWordcheck{ position:fixed; top:64px; left:0; right:0; display:none; align-items:center; gap:8px; padding:8px 16px; z-index:55; background:linear-gradient(90deg, rgba(7,27,63,0.95), rgba(18,88,239,0.95)); }
+#boardWordcheck.active{ display:flex }
+
+/* ODS status badge spacing (moved from inline style) */
+#odsStatus{ margin-left:8px }
+
+/* Responsive: move timer under board actions on small screens */
+@media(max-width:700px){ .timer-container{ flex-wrap:wrap } }
+
+/* score columns: double width (except first column) */
+#dth:nth-child(n+2),
+#activeGameTableBoard td:nth-child(n+2) { width: 80px; min-width:80px; max-width:80px; padding:2px 4px }
+.board-score{ width:100%; padding:2px; box-sizing:border-box; text-align:right }
+
+/* reduce default cell padding to shrink columns slightly */
+.players-table th, .players-table td{ padding:6px }
+
+/* reduce first column (names) width and truncate long names */
+#generalTable th:first-child,
+#generalTable td:first-child,
+#gameTable th:first-child,
+#gameTable td:first-child {
+  width: 130px;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+/* Appended styles from standalone.html inline block (dark theme) */
+:root{ 
+  /* Typographie et couleurs */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  --texte: #e6eef8;
+  --fond-principal: #091b3f;
+  --accent-debut: #071b3f;
+  --accent-fin: #1258ef;
+  --bord-faible: rgba(255,255,255,0.04);
+  --espacement-petit: 8px;
+  --rayon-input: 8px;
+  --yams-largeur-entree: 50px;
+  --toast-fond: rgba(232, 67, 12, 0.95);
+}
+body{margin:0;background:var(--fond-principal);min-height:100vh;color:var(--texte)}
+.topbar{position:fixed;left:0;right:0;top:0;height:64px;background:linear-gradient(45deg,var(--accent-debut) 0%, var(--accent-fin) 100%);border-bottom:1px solid var(--bord-faible);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:20;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+.topbar .btn{margin-left:6px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:#dbeafe;padding:8px 10px;border-radius:8px}
+/* Center the timer visually in the topbar */
+.topbar .timer-container{ position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 25 }
+@media (max-width:700px){ .topbar .timer-container{ position: static; transform: none; margin:8px 0 } }
+.container{padding:16px;max-width:980px;margin:0 auto;min-height:calc(100vh - 64px);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cols{display:flex;gap:16px}
+.box{background:#0e1b07;border:1px solid rgba(231, 231, 32, 0.03);padding:14px;border-radius:12px;flex:1;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+h3{margin:0 0 8px;font-size:15px;color:#dbeafe}
+/* tables: improved readability for dark theme */
+table{width:100%;border-collapse:collapse;font-size:14px;color:#e6eef8}
+thead th{background:rgba(255,255,255,0.08);color:#dbeafe;font-weight:700;border:1px solid rgba(98, 54, 54, 0.782)}
+th,td{padding:12px 12px;border:1px solid rgba(98, 54, 54, 0.782);text-align:left}
+tbody tr{background:transparent}
+tbody tr:nth-child(odd){background:rgba(255,255,255,0.01)}
+tbody tr:hover{background:rgba(255,255,255,0.04)}
+tbody td{transition:background .12s ease}
+.small{font-size:13px;color:#9fb3d6}
+.hidden{display:none}
+.btn.primary{padding:8px 8px;border-radius:10px;border:none;background:linear-gradient(90deg,#2563eb,#7c3aed);color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(59,130,246,0.12)}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#dbeafe}
+/* small green add button near inputs */
+#addPlayerBtn{background:#1f9d55;border:1px solid rgba(0,0,0,0.12);color:#fff;padding:6px 8px;border-radius:8px;cursor:pointer}
+#addPlayerBtn:hover{filter:brightness(1.05)}
+/* delete icon button in lists */
+button.del{ background:transparent; border:1px solid rgba(255,255,255,0.06); padding:6px; border-radius:8px; cursor:pointer; color:inherit }
+button.del:hover{ filter:brightness(0.92) }
+input[type=text], .entree{width:80%;padding:var(--espacement-petit);border:1px solid var(--bord-faible);border-radius:var(--rayon-input);background:rgba(48, 47, 47, 0.807);color:var(--texte)}
+.active-game{overflow:auto}
+#boardThead th, #boardTfoot td{border-top:1px solid rgb(98, 54, 54, 0.782)}
+.subtotal-row td{background:rgba(59,130,246,0.06);color:#0b5fff;text-align:right;font-weight:700}
+/* reduce first column (Manche) */
+/* (duplicate removed — refer to canonical definition above) */
+.player-col{width:80px;text-align:center}
+.name-col{width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:60}
+.modal.hidden{display:none}
+.modal-content{background:#07101b;padding:18px;border-radius:12px;width:360px;box-shadow:0 20px 60px rgba(2,6,23,0.8);border:1px solid rgba(255,255,255,0.03);color:#e6eef8}
+.modal-content h4{margin:0 0 6px}
+.modal-content p{margin:0 0 12px;color:#9fb3d6}
+.modal-content .btn{flex:1;padding:8px 10px;border-radius:8px;box-shadow:none}
+.modal-actions{display:flex;gap:8px}
+@media (max-width:700px){ .cols{flex-direction:column} .name-col{width:auto} .player-col{width:80px} .container{padding:110px 12px 20px} }
+
+/* small helpers used in markup */
+.spacer{flex:1}
+.mt-18{margin-top:18px}
+.goodbye-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#07101b;color:#e6eef8;font-family:system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+.goodbye-inner{text-align:center;padding:20px}
+
+/* Helper classes added when extracting inline styles */
+.box-header{ display:flex; align-items:center; justify-content:space-between }
+.btn-reset{ font-size:14px; padding:6px 12px; margin-left:12px }
+.small-col{ width:40px; text-align:center }
+.text-center{ text-align:center }
+
+
+/* Yams helpers (simple, table-aligned) */
+.yams-header{ display:flex; align-items:center; justify-content:space-between }
+.action-col{ width:40px; text-align:center }
+.yams-cell-center{ text-align:left; padding:0 6px }
+.yams-cell-center, .yams-barred-cell { position: relative }
+.yams-cell-center .yams-barre-btn,
+.yams-barred-cell .yams-barre-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 1px;
+}
+.yams-input{ width:40px; height:20px; text-align:center; font-size:13px; padding:0 4px; box-sizing:border-box }
+input.yams-input, .yams-cell-center input.yams-input{ width:40px }
+.yams-input:focus{ outline:none; box-shadow:0 0 0 2px rgba(59,130,246,0.14); border-radius:4px }
+.yams-barre-btn{ background:transparent; border:none; cursor:pointer; font-size:18px; line-height:1; color:#e11d48; margin-left:6px }
+.yams-barred-cell{ text-align:center;  }
+
+/* Wrapper around the Yams table used to anchor the reset icon to the table edge */
+.yams-table-wrap{ position:relative }
+
+.yams-table-wrap{ display:inline-block; padding:4px 6px; box-sizing:border-box; margin:8px auto; max-width:calc(100% - 32px); background:#0e1b07; border-radius:12px }
+#yamsTable{ width:auto; border-collapse:collapse }
+
+/* Reduce padding of the Yams box so the visible dark background is tighter */
+/* For the Yams tab, make the .box adapt to the inner table size
+   instead of stretching. Keep it centered and prevent global flex:1 from forcing width. */
+#yamsTab > .box{
+  background: transparent;
+  padding: 8px 0;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: auto;
+  margin: 8px auto;
+}
+
+/* Position reset icon slightly above/right of the table edge so it doesn't sit inside cells */
+.yams-header{ display:flex; align-items:center; justify-content:space-between }
+.yams-header .btn-reset{ position:relative; margin-left:12px; padding:6px 8px; background:transparent }
+@media (max-width:700px){ .yams-header .btn-reset{ margin-left:12px } }
+.yams-barred-cell .yams-barre-btn{ background:transparent; border:none; padding:5; font-size:18px; line-height:1 }
+.yams-bold{ font-weight:700 }
+
+/* disabled look */
+.yams-barre-btn.disabled-look{ opacity:0.45 }
+.yams-barre-btn[aria-disabled="true"]{ opacity:0.45 }
+
+/* Hide number input spinners for Yams inputs and make them plain textfields */
+input.yams-input[type="number"]::-webkit-outer-spin-button,
+input.yams-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input.yams-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Hide the 'cross' (barre) button when the cell is barred */
+.yams-barred-cell .yams-barre-btn { display: none !important; }
+
+/* Toast styles */
+.toast{ position:fixed; right:16px; bottom:16px; background:var(--toast-fond); color:#ee0a0a; padding:10px 14px; border-radius:10px; box-shadow:0 8px 30px rgba(2,6,23,0.5); opacity:0; transform:translateY(8px); transition:opacity 240ms ease, transform 240ms ease; z-index:99999; pointer-events:none }
+.toast.visible{ opacity:1; transform:translateY(0); pointer-events:auto }
+
+/* Field-level error popup (small, near the offending input) */
+.field-error-popup{ background:#ee0707; color:#100f0f; border:1px solid #fca5a5; padding:6px 8px; border-radius:6px; font-size:13px; box-shadow:0 6px 20px rgba(2,6,23,0.12); z-index:200000; max-width:240px }
