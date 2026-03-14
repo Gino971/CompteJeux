@@ -691,19 +691,67 @@ function scheduleRenderYams(focused){
     
   function playShortBeep(){ try{ const ctx = __audioCtx; if(!ctx) return; if(ctx.state === 'suspended' && ctx.resume) ctx.resume(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'square'; o.frequency.value = 1200; g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.005); o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12); setTimeout(()=>{ try{ o.stop() }catch(e){} }, 180) }catch(e){} }
     
-  function playLongBeep(){ try{ const ctx = __audioCtx; if(!ctx) return; if(ctx.state === 'suspended' && ctx.resume) ctx.resume(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'sine'; o.frequency.value = 392; g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.02); o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.0); setTimeout(()=>{ try{ o.stop() }catch(e){} }, 2100) }catch(e){} }
+  function playShortBeep(){ try{ const AudioCtx = window.AudioContext || window.webkitAudioContext; const ctx = __audioCtx || (AudioCtx ? new AudioCtx() : null); if(!ctx) return; if(ctx.state === 'suspended' && ctx.resume) ctx.resume(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'square'; o.frequency.value = 1200; g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.005); o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12); setTimeout(()=>{ try{ o.stop(); if(!__audioCtx){ ctx.close() } }catch(e){} }, 180) }catch(e){} }
     
+  function playLongBeep(){ try{ const AudioCtx = window.AudioContext || window.webkitAudioContext; const ctx = __audioCtx || (AudioCtx ? new AudioCtx() : null); if(!ctx) return; if(ctx.state === 'suspended' && ctx.resume) ctx.resume(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'sine'; o.frequency.value = 392; g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.02); o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.0); setTimeout(()=>{ try{ o.stop(); if(!__audioCtx){ ctx.close() } }catch(e){} }, 2100) }catch(e){} }
+    
+  // Timer control
+  var __timerInterval = null;
+
+  function updateTimerDisplay(){
+    try{
+      const el = $('timerText'); if(!el) return;
+      const t = (state && state.timer) ? state.timer : { duration: 0, remaining: 0, running: false };
+      const rem = (typeof t.remaining === 'number') ? t.remaining : (t.duration || 0);
+      const m = Math.floor(rem/60).toString().padStart(1,'0');
+      const s = (rem%60).toString().padStart(2,'0');
+      el.textContent = m + ':' + s;
+      const hg = document.querySelector('.hourglass'); if(hg){ if(t.running) hg.classList.add('running'); else hg.classList.remove('running') }
+      // flash timer in last 5 seconds
+      try{
+        const td = $('timerDisplay'); if(td){ if(t.running && rem>0 && rem<=5) td.classList.add('urgent'); else td.classList.remove('urgent') }
+      }catch(e){}
+    }catch(e){}
+  }
+
+  function startTimer(seconds){
+    try{
+      if(!state) state = { timer: { duration: 0, remaining: 0, running: false } }
+      if(typeof seconds === 'number' && seconds > 0){ state.timer.duration = seconds; state.timer.remaining = seconds }
+      if(!state.timer || typeof state.timer.remaining !== 'number') state.timer.remaining = Number(state.timer.duration) || 0;
+      state.timer.running = true;
+      // Ensure AudioContext exists (user gesture: clicking Start)
+      try{ const AudioCtx = window.AudioContext || window.webkitAudioContext; if(AudioCtx && !window.__audioCtx){ try{ window.__audioCtx = new AudioCtx(); }catch(e){} } }catch(e){}
+      try{ if(window.__audioCtx && window.__audioCtx.state === 'suspended' && window.__audioCtx.resume){ window.__audioCtx.resume().catch(()=>{}) } }catch(e){}
+      updateTimerDisplay();
+      if(__timerInterval) clearInterval(__timerInterval);
+      __timerInterval = setInterval(function(){
+        try{
+          if(!state.timer || !state.timer.running) return;
+          state.timer.remaining = Math.max(0, (state.timer.remaining || 0) - 1);
+          // play short beep for the last 5 seconds
+          try{ if(state.timer.remaining > 0 && state.timer.remaining <= 5){ try{ playShortBeep() }catch(e){} } }catch(e){}
+          updateTimerDisplay();
+          if(state.timer.remaining <= 0){
+            // time's up
+            stopTimer();
+            try{
+              // play the final beep 5 times quickly
+              for(var i=0;i<5;i++){ (function(i){ setTimeout(function(){ try{ playLongBeep() }catch(e){} }, i*150) })(i) }
+            }catch(e){}
+            try{ showToast('Temps écoulé') }catch(e){}
+          }
+        }catch(e){}
+      }, 1000);
+    }catch(e){}
+  }
+
   function stopTimer(){ if(__timerInterval){ clearInterval(__timerInterval); __timerInterval = null } if(state.timer) state.timer.running = false; updateTimerDisplay() }
 
   // Toast helper (non-intrusive notifications)
   function showToast(msg, duration){
-    duration = duration || 1800;
-    var t = document.getElementById('appToast');
-    if(!t){ t = document.createElement('div'); t.id = 'appToast'; t.className = 'toast'; document.body.appendChild(t) }
-    t.textContent = String(msg);
-    t.classList.add('visible');
-    clearTimeout(t.__hideTimer);
-    t.__hideTimer = setTimeout(()=>{ t.classList.remove('visible') }, duration);
+    // Toast UI removed: keep a console fallback for debug
+    try{ if(!msg || String(msg).trim() === '') return; console.log('toast:', String(msg)); }catch(e){}
   }
 
   // --- Word checker (FFScrabble attempt + fallback) ---

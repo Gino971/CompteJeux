@@ -69,7 +69,7 @@ main{ padding:76px 16px 16px }
 
 /* Yams column sizes: first column 30px, others 40px */
 #yamsTable th:first-child, #yamsTable td:first-child { width: 140px; }
-#yamsTable th:nth-child(n+2), #yamsTable td:nth-child(n+2) { width: 90px; }
+#yamsTable th:nth-child(n+2), #yamsTable td:nth-child(n+2) { width: 150px; }
 
 /* Allow Yams cell contents to shrink instead of forcing column width */
 .yams-cell-center { min-width: 0 }
@@ -84,10 +84,15 @@ main{ padding:76px 16px 16px }
 .timer-container .timer-label{ font-size:12px; color:#333 }
 .timer-container input[type="number"]{ width:64px; padding:6px; border-radius:6px; border:1px solid #ddd }
 .timer-display{ display:flex; gap:8px; align-items:center; padding:6px 8px; background:#f3f6ff; border-radius:8px }
-.hourglass{ transition: transform 0.2s linear }
+.hourglass{ transition: transform 0.2s linear; display: inline-block; color: #0b5fff; opacity: 1 }
+.timer-display.urgent .hourglass { color: #dc2626 }
 .hourglass.running{ animation: hg-rotate 1s linear infinite }
 @keyframes hg-rotate{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
 .timer-display #timerText{ font-weight:700; color:#0b5fff }
+/* urgent flashing state for last seconds */
+.timer-display.urgent{ animation: timer-flash 1s linear infinite; border:1px solid rgba(220,38,38,0.35) }
+.timer-display.urgent #timerText{ color: #dc2626 }
+@keyframes timer-flash{ 0%{ background: rgba(220,38,38,0.06) } 50%{ background: rgba(220,38,38,0.16) } 100%{ background: rgba(220,38,38,0.06) } }
 
 /* Word checker */
 .wordcheck-container{ display:flex; gap:8px; align-items:center }
@@ -97,7 +102,7 @@ main{ padding:76px 16px 16px }
 .wordcheck-result-unknown{ color:#ffd77a }
 
 /* Ensure the word-check input keeps a fixed width despite global input[type=text] rules */
-#wordCheckInput{ width:80px; flex:0 0 80px; min-width:80px; max-width:80px; box-sizing:border-box }
+#wordCheckInput{ width:120px; flex:0 0 200px; box-sizing:border-box }
 .wordcheck-container .btn{ flex:0 0 auto }
 
 /* Increase wordcheck result size */
@@ -151,8 +156,8 @@ main{ padding:76px 16px 16px }
   --toast-fond: rgba(232, 67, 12, 0.95);
 }
 body{margin:0;background:var(--fond-principal);min-height:100vh;color:var(--texte)}
-.topbar{position:fixed;left:0;right:0;top:0;height:64px;background:linear-gradient(45deg,var(--accent-debut) 0%, var(--accent-fin) 100%);border-bottom:1px solid var(--bord-faible);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:20;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
-.topbar .btn{margin-left:6px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:#dbeafe;padding:8px 10px;border-radius:8px}
+.topbar{position:fixed;left:0;right:0;top:0;height:72px;background:linear-gradient(45deg,var(--accent-debut) 0%, var(--accent-fin) 100%);border-bottom:1px solid var(--bord-faible);display:flex;align-items:center;gap:12px;padding:0 18px;z-index:20;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+.topbar .btn{margin-left:8px;background:transparent;border:1px solid rgba(255,255,255,0.08);color:#dbeafe;padding:10px 14px;border-radius:10px;font-size:16px;line-height:1.1}
 /* Center the timer visually in the topbar */
 .topbar .timer-container{ position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 25 }
 @media (max-width:700px){ .topbar .timer-container{ position: static; transform: none; margin:8px 0 } }
@@ -169,6 +174,8 @@ tbody tr:nth-child(odd){background:rgba(255,255,255,0.01)}
 tbody tr:hover{background:rgba(255,255,255,0.04)}
 tbody td{transition:background .12s ease}
 .small{font-size:13px;color:#9fb3d6}
+#wordCheckResult .wordcheck-result-valid{ color: #16a34a }
+#wordCheckResult .wordcheck-result-invalid{ color: #dc2626 }
 .hidden{display:none}
 .btn.primary{padding:8px 8px;border-radius:10px;border:none;background:linear-gradient(90deg,#2563eb,#7c3aed);color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(59,130,246,0.12)}
 .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#dbeafe}
@@ -222,7 +229,7 @@ input[type=text], .entree{width:80%;padding:var(--espacement-petit);border:1px s
   margin-left: 1px;
 }
 .yams-input{ width:40px; height:20px; text-align:center; font-size:13px; padding:0 4px; box-sizing:border-box }
-input.yams-input, .yams-cell-center input.yams-input{ width:40px }
+input.yams-input, .yams-cell-center input.yams-input{ width:80px }
 .yams-input:focus{ outline:none; box-shadow:0 0 0 2px rgba(59,130,246,0.14); border-radius:4px }
 .yams-barre-btn{ background:transparent; border:none; cursor:pointer; font-size:18px; line-height:1; color:#e11d48; margin-left:6px }
 .yams-barred-cell{ text-align:center;  }
