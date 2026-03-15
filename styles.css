@@ -178,9 +178,9 @@ input[type=text],
   width:80%;
   height: 20px;
   padding:var(--espacement-petit);
-  border:1px solid var(--bord-faible);
+  border:3px solid var(--bord-faible);
   border-radius:var(--rayon-input);
-  background:rgba(48, 47, 47, 0.807);
+  background:transparent;
   color:var(--texte);
 }
 
@@ -620,6 +620,15 @@ input[type=text],
   }
 }
 
+/* Scrabble: only highlight the hovered cell, not the whole row */
+#activeGameTableBoard tbody tr:hover{ background: transparent; }
+#activeGameTableBoard tbody td:hover{ background: rgba(255,255,255,0.04); transition: background 120ms ease; }
+
+/* Ensure subtotal rows keep their background on hover (no hover override) */
+#activeGameTableBoard tbody tr.subtotal-row td:hover{
+  background: rgba(59,130,246,0.06) !important;
+}
+
 /************************************************************
   3. PAGE SCRABBLE / WORDCHECK ODS
 ************************************************************/
@@ -982,9 +991,9 @@ input[type=text],
 
 /* 5.2 Table Yams */
 #yamsTab .yams-table-wrap > #yamsTable{
-  /* Let the table size to its intrinsic column widths so the wrapper can scroll */
-  table-layout:auto;
-  width: max-content;
+  /* Force a fixed-layout table and let the wrapper scroll horizontally when needed */
+  table-layout: fixed !important;
+  width: max-content !important;
   border-collapse:collapse;
 }
 
@@ -1012,21 +1021,26 @@ input[type=text],
   left: 0;
   box-sizing: border-box;
 }
-#yamsTable thead th:first-child{
-  z-index: 12;
-  background: rgba(255,255,255,0.04);
-  padding-left: 8px;
-  text-align: left;
-  box-shadow: 6px 0 14px -8px rgba(0,0,0,0.6);
-}
+
 #yamsTable tbody td:first-child{
   z-index: 8;
   background: #0e1b07;
   padding-left: 8px;
 }
 
+/* Yams: only highlight the hovered cell, not the whole row */
+#yamsTable tbody tr:hover{ background: transparent; }
+#yamsTable tbody td:hover{ background: rgba(255,255,255,0.04); }
 
-
+/* Player columns: fixed narrow width so table can overflow horizontally */
+#yamsTable thead th:nth-child(n+2),
+#yamsTable tbody td:nth-child(n+2){
+  width:110px !important;
+  min-width:110px !important;
+  max-width:110px !important;
+  text-align:center;
+  padding:0 8px;
+}
 
 /* 5.3 Cellules Yams */
 .yams-cell-center{
@@ -1089,7 +1103,7 @@ input[type=text],
 
 input.yams-input,
 .yams-cell-center input.yams-input{
-  width:80px;
+  width:60px;
 }
 
 .yams-input:focus{
@@ -1116,20 +1130,31 @@ input.yams-input[type="number"]{
 
 /* 6.1 Layout Simon */
 .simon-wrap{
-  display:flex;
-  gap:16px;
-  align-items:center;
-  flex-direction:column;
+  display:grid;
+  grid-template-columns: 1fr auto; /* main column + column for lives */
+  grid-template-rows: auto auto;
+  gap:12px;
+  grid-template-areas:
+    "board lives"
+    "actions lives";
+  align-items:start;
+  justify-content:center;
+  width:100%;
+  box-sizing:border-box;
+  padding:6px;
 }
 
 .simon-board{
-  width:260px;
-  height:260px;
+  grid-area: board;
+  width: min(260px, 68vw);
+  height: min(260px, 68vw);
+  max-width: 320px;
+  max-height: 320px;
   display:grid;
   grid-template-columns:1fr 1fr;
   grid-template-rows:1fr 1fr;
-  gap:10px;
-  margin:10px auto;
+  gap:8px;
+  margin:6px 0;
 }
 
 .simon-pad{
@@ -1205,11 +1230,15 @@ input.yams-input[type="number"]{
 }
 
 .simon-actions{
-  width:260px;
+  grid-area: actions;
+  width: min(260px, 60vw);
   display:flex;
   flex-direction:column;
   gap:8px;
   align-items:stretch;
+  justify-content:flex-end;
+  min-height:120px;
+  box-sizing:border-box;
 }
 
 .simon-actions .btn{
@@ -1219,8 +1248,8 @@ input.yams-input[type="number"]{
 #simon-start{
   display:block;
   width:100%;
-  height:80px;
-  border-radius:12px;
+  height:64px;
+  border-radius:10px;
   font-weight:700;
   cursor:pointer;
 }
@@ -1232,21 +1261,23 @@ input.yams-input[type="number"]{
 
 /* 6.5 Vies et bannière de défaite */
 .simon-lives{
+  grid-area: lives;
   display:flex;
+  flex-direction:column;
   gap:8px;
   align-items:center;
-  justify-content:center;
-  padding:6px 12px;
+  justify-content:flex-start;
+  padding:6px 8px;
   border-radius:12px;
   background:linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
   box-shadow:0 6px 18px rgba(0,0,0,0.4);
   color:var(--texte);
   font-weight:800;
-  min-width:260px;
+  min-width:72px;
 }
 
 .simon-lives .heart{
-  font-size:50px;
+  font-size:28px;
   line-height:1;
 }
 
@@ -1269,7 +1300,7 @@ input.yams-input[type="number"]{
 }
 
 #simon-lose-banner .simon-lose-inner{
-  background:linear-gradient(180deg,#fff,#f8f8f8);
+  background:linear-gradient(180deg,#232020,#7c7474);
   padding:28px 34px;
   border-radius:12px;
   text-align:center;
@@ -1283,8 +1314,31 @@ input.yams-input[type="number"]{
 }
 
 #simon-lose-banner p{
-  margin:0 0 14px;
+  margin:10px 10px 14px;
   font-size:18px;
+}
+
+/* Responsive: stack Simon elements on small screens */
+@media(max-width:520px){
+  .simon-wrap{ display:flex; flex-direction:column; align-items:center }
+  .simon-lives{ flex-direction:row; min-width:0; gap:6px }
+  .simon-actions{ height:auto; justify-content:flex-start; width:100%; max-width:420px }
+  #simon-start{ height:56px }
+}
+
+/* Actions spacing inside the lose dialog */
+#simon-lose-banner .simon-lose-inner .simon-lose-actions{
+  display:flex !important;
+  gap:12px !important;
+  justify-content:center !important;
+  align-items:center !important;
+  margin-top:12px !important;
+}
+#simon-lose-banner .simon-lose-inner .simon-lose-actions .btn{
+  padding:8px 12px;
+}
+#simon-lose-banner .simon-lose-inner .simon-lose-actions button + button{
+  margin-left:12px !important;
 }
 
 #simon-lose-banner button{
@@ -1300,8 +1354,8 @@ input.yams-input[type="number"]{
 /* 6.6 Responsive Simon */
 @media(max-width:700px){
   .simon-board{
-    width:200px;
-    height:200px;
+    width: min(200px, 72vw);
+    height: min(200px, 72vw);
   }
 }
 

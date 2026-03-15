@@ -61,12 +61,13 @@
       // remove existing
       const old = document.getElementById('simon-lose-banner'); if(old) old.remove();
       const b = document.createElement('div'); b.id = 'simon-lose-banner';
-      b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>tu as eu ${points} points</p><button id="simon-restart">Rejouer</button></div>`;
+      b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>tu as eu ${points} points</p><div class="simon-lose-actions"><button id="simon-restart">Rejouer</button><button id="simon-back-to-players" class="btn ghost">Joueurs</button></div></div>`;
       document.body.appendChild(b);
       // disable pads
       pads.forEach(p=>{ if(p) p.disabled = true; p && p.classList.add && p.classList.add('disabled') });
       animating = true;
       const restart = document.getElementById('simon-restart'); if(restart) restart.addEventListener('click', ()=>{ try{ b.remove(); resetGame(); startGame() }catch(e){} })
+      const back = document.getElementById('simon-back-to-players'); if(back) back.addEventListener('click', ()=>{ try{ b.remove(); showListsTab(); }catch(e){} })
     }catch(e){ console.error(e) }
   }
 

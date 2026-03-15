@@ -31,7 +31,7 @@ async function loadODS(){
       const txt = await r.text()
       const lines = txt.split(/\r?\n/)
       odsSet = new Set()
-      for(const l of lines){ const w = (l||'').trim(); if(!w) continue; odsSet.add(w.toUpperCase()) }
+      for(const l of lines){ const w = (l||'').trim(); if(!w) continue; odsSet.add(normalizeWord(w)) }
       if(odsSet.size) odsAvailable = true
       return
     }
@@ -41,7 +41,7 @@ async function loadODS(){
     const seed = document.getElementById('seed-ods')
     if(seed){
       const words = (seed.textContent || '').split(/\r?\n/).map(s=>s.trim()).filter(Boolean)
-      if(words.length){ odsSet = new Set(words.map(w=>w.toUpperCase())); odsAvailable = true; return }
+      if(words.length){ odsSet = new Set(words.map(w=>normalizeWord(w))); odsAvailable = true; return }
     }
   }catch(e){}
   odsSet = null
@@ -53,6 +53,16 @@ function updateODSStatus(){
   if(!el) return
   // Ne pas afficher le statut ODS dans l'UI
   el.textContent = ''
+}
+
+// Normalize a word: remove diacritics and uppercase for accent-insensitive comparisons
+function normalizeWord(w){
+  if(!w) return '';
+  try{
+    return String(w).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+  }catch(e){
+    return String(w).toUpperCase();
+  }
 }
 
 function bind(){
@@ -145,7 +155,17 @@ function bind(){
   // word checker hooks
   const _wordCheckBtn = $('wordCheckBtn')
   const _wordCheckInput = $('wordCheckInput')
-  if(_wordCheckBtn){ _wordCheckBtn.addEventListener('click', ()=>{ const w = (_wordCheckInput && _wordCheckInput.value||'').trim(); if(!w) return alert('Entrez un mot'); const bw = $('boardWordcheck'); if(bw){ bw.classList.add('active'); bw.setAttribute('aria-hidden','false') } checkWord(w).then(r=> showWordResult(r,w)) }) }
+  if(_wordCheckBtn){
+    _wordCheckBtn.addEventListener('click', ()=>{
+      const w = (_wordCheckInput && _wordCheckInput.value||'').trim();
+      if(!w) return alert('Entrez un mot');
+      const bw = $('boardWordcheck'); if(bw){ bw.classList.add('active'); bw.setAttribute('aria-hidden','false') }
+      checkWord(w).then(r=>{
+        try{ showWordResult(r,w) }catch(e){}
+        try{ if(_wordCheckInput){ _wordCheckInput.value=''; _wordCheckInput.focus(); } }catch(e){}
+      })
+    })
+  }
   if(_wordCheckInput){ _wordCheckInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ _wordCheckBtn && _wordCheckBtn.click() } }) }
   try{
     $('modalSave').addEventListener('click', ()=>{ try{ doEndGameSave() }catch(e){ console.error('save error',e) } finally{ hideModal() } })
@@ -396,11 +416,16 @@ function renderYams() {
     const existingColgroup = table.querySelector('colgroup');
     const cg = document.createElement('colgroup');
     const firstCol = document.createElement('col'); firstCol.style.width = '140px'; firstCol.style.minWidth = '140px'; firstCol.style.maxWidth = '140px'; cg.appendChild(firstCol);
-    players.forEach(function(){ const c = document.createElement('col'); c.style.width = '70px'; c.style.minWidth = '70px'; c.style.maxWidth = '70px'; cg.appendChild(c); });
+    players.forEach(function(){ const c = document.createElement('col'); c.style.width = '80px'; c.style.minWidth = '80px'; c.style.maxWidth = '80px'; cg.appendChild(c); });
     if(existingColgroup && existingColgroup.parentNode){ existingColgroup.parentNode.replaceChild(cg, existingColgroup); } else { table.insertBefore(cg, table.firstChild); }
   }catch(e){ /* ignore colgroup errors */ }
-  const theadElem = table.querySelector('thead');
-  if(theadElem) theadElem.innerHTML = thead;
+  var theadElem = table.querySelector('thead');
+  if(!theadElem){
+    theadElem = document.createElement('thead');
+    const ref = table.querySelector('tbody') || table.firstChild;
+    table.insertBefore(theadElem, ref);
+  }
+  theadElem.innerHTML = thead;
   // helper: show a small field-level error popup near an element
   function showFieldError(el, msg){
     try{
@@ -720,7 +745,8 @@ window.onload = init;
   // Si l'ODS est disponible, il est maître : présent => valide, absent => invalide
   try{
     if(odsSet){
-      if(odsSet.has(trimmed.toUpperCase())){
+      const norm = normalizeWord(trimmed);
+      if(odsSet.has(norm)){
         return { valid: true, source: 'ODS8', defs: [] }
       } else {
         return { valid: false, source: 'ODS8' }
