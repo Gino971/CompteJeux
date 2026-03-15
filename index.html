@@ -14,21 +14,16 @@
     <button id="tabYamsBtn" class="btn">Yams</button>
     <button id="startGameBtn" class="btn">Scrabble</button>
     <button id="tabSimonBtn" class="btn">Simon</button>
-    <div class="timer-container">
-      <label class="timer-label">Minuteur</label>
-      <input id="timerDuration" type="number" min="1" value="60" aria-label="Durée (s)">
-      <button id="timerStartBtn" class="btn">Start</button>
-      <button id="timerStopBtn" class="btn">Stop</button>
-      <div id="timerDisplay" class="timer-display"><span id="timerText">1:00</span></div>
-    </div>
+    <button id="tabTimerBtn" class="btn">Minuteur</button>
     <div class="spacer"></div>
+    <div id="topbarTimerReminder" class="topbar-timer-reminder" title="Ouvrir le minuteur">1:00</div>
     <button id="tabListsBtn" class="btn">Joueurs</button>
     <button id="endGameBtn" class="btn">Terminer</button>
   </div>
 
   <div id="boardWordcheck" aria-hidden="true">
     <div class="wordcheck-container">
-      <input id="wordCheckInput" type="text" placeholder="Vérifier mot" aria-label="Vérifier mot">
+      <input id="wordCheckInput" type="text" placeholder="Vérifier mot" aria-label="Vérifier mot" maxlength="15" size="17">
       <button id="wordCheckBtn" class="btn">Vérifier</button>
       <span id="wordCheckResult" class="small"></span>
       <span id="odsStatus" class="small"></span>
@@ -55,8 +50,8 @@
 
     <section id="simonTab" class="hidden">
       <div class="box">
-        <h3>Simon</h3>
         <div class="simon-wrap">
+          <div id="simon-lives-wrap" class="simon-lives" aria-hidden="true"></div>
           <div class="simon-board" role="application" aria-label="Simon game">
             <button id="simon-btn-0" class="simon-pad simon-pad-0" data-index="0" aria-label="Pad 1"></button>
             <button id="simon-btn-1" class="simon-pad simon-pad-1" data-index="1" aria-label="Pad 2"></button>
@@ -69,6 +64,28 @@
               <button id="simon-start" class="btn">Start</button>
               <button id="simon-reset" class="btn ghost">Reset</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="timerTab" class="hidden">
+      <div class="box timer-box-center">
+        <h3>Minuteur</h3>
+        <div class="timer-page">
+          <div class="timer-presets">
+            <button class="btn preset" data-seconds="7">7s</button>
+            <button class="btn preset" data-seconds="30">30s</button>
+            <button class="btn preset" data-seconds="60">60s</button>
+            <button class="btn preset" data-seconds="90">90s</button>
+            <button class="btn preset" data-seconds="120">120s</button>
+          </div>
+          <div id="bigTimerDisplay" class="timer-display-large">1:00</div>
+          <div class="timer-controls">
+            <input id="timerCustom" type="number" min="1" value="60" aria-label="Durée (s)">
+            <button id="timerStartBtnPage" class="btn">Démarrer</button>
+            <button id="timerStopBtnPage" class="btn">Arrêter</button>
+            <button id="timerResetBtnPage" class="btn ghost">Réinitialiser</button>
           </div>
         </div>
       </div>
@@ -119,5 +136,6 @@
 
   <script src="script.js"></script>
   <script src="simon.js"></script>
+  <script src="timer.js"></script>
 </body>
 </html>
