@@ -771,6 +771,251 @@ input[type=text],
   }
 }
 
+/* ===== Morpion styles ===== */
+.morpion-box{
+  max-width:420px;
+  margin:8px auto;
+}
+.morpion-game{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+}
+.morpion-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:8px;
+  width:100%;
+  max-width:360px;
+}
+.morpion-cell{
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.04);
+  aspect-ratio:1/1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:42px;
+  font-weight:800;
+  color:var(--texte);
+  border-radius:8px;
+  cursor:pointer;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  user-select:none;
+}
+.morpion-cell:hover{ background:rgba(255,255,255,0.04) }
+.morpion-cell.x{ color:#fff; }
+.morpion-cell.o{ color:#ffd166 }
+.morpion-controls{ display:flex; gap:12px; align-items:center }
+.morpion-controls #morpionStatus{ min-width:160px }
+
+.morpion-cell.win{ background:linear-gradient(90deg, rgba(34,197,94,0.18), rgba(34,197,94,0.08)); box-shadow:0 8px 30px rgba(16,185,129,0.12); }
+
+@media(max-width:420px){
+  .morpion-cell{ font-size:34px }
+}
+
+/* 6. PAGE 421 (dés) */
+.fourtwoone-box{
+  max-width:520px;
+  margin:8px auto;
+}
+.dice-grid{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  align-items:center;
+  margin:12px 0;
+}
+.die{
+  width:84px;
+  height:84px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.04);
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:34px;
+  font-weight:800;
+  color:var(--texte);
+}
+.die.selected{
+  box-shadow:0 10px 30px rgba(59,130,246,0.18);
+  border-color:rgba(59,130,246,0.45);
+  background:linear-gradient(90deg, rgba(59,130,246,0.06), rgba(59,130,246,0.02));
+}
+.fourtwoone-history{ max-width:520px; margin:8px auto; color:#cfe0ff }
+
+/* layout classes extracted from inline styles */
+.fourtwoone-combos--top{ min-width:260px; margin-bottom:12px }
+.fourtwoone-info{ display:flex; gap:12px; align-items:center; justify-content:center }
+.fourtwoone-layout{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center }
+.fourtwoone-tokens--panel{ min-width:260px }
+.fourtwoone-history__title{ margin:8px 0 6px }
+
+/* Floating compact combos box: minimal footprint top-left */
+.fourtwoone-combos--floating{
+  position:fixed;
+  top:88px; /* below topbar */
+  left:12px;
+  width:180px;
+  z-index:95;
+  padding:6px 8px;
+  border-radius:8px;
+  box-shadow:0 8px 28px rgba(2,6,23,0.6);
+  background:linear-gradient(180deg, rgba(14,27,7,0.9), rgba(7,16,11,0.9));
+}
+.fourtwoone-dice-row{ display:flex; align-items:center; justify-content:center; gap:12px; margin-top:8px }
+.fourtwoone-combo-box{ min-width:140px; padding:8px; text-align:left }
+.fourtwoone-combo-box .small{ color:#cfe0ff }
+.fourtwoone-combo-box #fourtwooneComboLabel{ font-weight:700; margin-bottom:6px }
+.fourtwoone-combo-box #fourtwooneComboTokens{ color:#0b5fff; font-weight:800 }
+/* ensure combo box is clearly visible */
+.fourtwoone-combo-box{
+  background: linear-gradient(180deg, rgba(11,17,30,0.9), rgba(7,12,18,0.9));
+  border:1px solid rgba(11,95,255,0.12);
+  border-radius:10px;
+  box-shadow:0 8px 24px rgba(2,6,23,0.6);
+  z-index:70;
+}
+.fourtwoone-combo-box .small{ font-size:13px }
+
+/* phase/pot display */
+.fourtwoone-phase-box{ display:flex; flex-direction:column; gap:4px; align-items:flex-start; margin-left:8px; padding:6px }
+.fourtwoone-phase-box #fourtwoonePhaseLabel{ font-weight:700; color:#ffd77a }
+.fourtwoone-phase-box #fourtwoonePotDisplay{ color:#9fe37b; font-weight:800 }
+.fourtwoone-combos--floating h4{ font-size:12px; margin:6px 0 6px; color:#cfe0ff }
+.fourtwoone-combos--floating table{ width:100%; font-size:12px }
+.fourtwoone-combos--floating thead{ display:none }
+.fourtwoone-combos--floating td{ padding:4px 6px; border:none }
+.fourtwoone-combos--floating td:first-child{ font-weight:600; color:#dbeafe }
+.fourtwoone-combos--floating td:last-child{ text-align:right; color:#0b5fff; font-weight:700 }
+.fourtwoone-combos--floating .box{ padding:6px }
+
+/* 421 combos & tokens tables */
+.fourtwoone-combos table,
+.fourtwoone-tokens table{
+  width:100%;
+  border-collapse:collapse;
+}
+.fourtwoone-combos th,
+.fourtwoone-combos td,
+.fourtwoone-tokens th,
+.fourtwoone-tokens td{
+  padding:8px 6px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  text-align:left;
+}
+.fourtwoone-combos th{ text-align:left; font-weight:700 }
+.fourtwoone-tokens td.actions{ text-align:right }
+.token-badge{ display:inline-block; min-width:40px; text-align:center; padding:4px 8px; border-radius:8px; background:rgba(11,95,255,0.08); color:#0b5fff; font-weight:700 }
+.token-btn{ padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.04); background:transparent; cursor:pointer }
+
+/* active combo highlight */
+.fourtwoone-combos tbody tr.combo-active{ background:linear-gradient(90deg, rgba(11,95,255,0.06), rgba(11,95,255,0.02)); border-left:4px solid #0b5fff }
+.fourtwoone-combos tbody tr.combo-active td{ color:#cfe0ff; font-weight:700 }
+
+/* new combo-cell styles for two-column layout */
+.combo-cell{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px; border-radius:8px }
+.combo-cell .combo-tokens{ font-weight:800; color:#0b5fff }
+.combo-cell.combo-active{ background:linear-gradient(90deg, rgba(11,95,255,0.16), rgba(11,95,255,0.08)); color:#fff; box-shadow:inset 0 0 0 1px rgba(11,95,255,0.02); }
+.fourtwoone-combos table td{ vertical-align:middle }
+
+/* parent TD highlight for stronger visibility: make the whole cell clearly highlighted */
+td.combo-active-td{
+  background:linear-gradient(90deg, rgba(92, 255, 11, 0.901), rgba(11,95,255,0.04));
+  border-left:0; /* remove slim stripe in favor of full background */
+}
+td.combo-active-td .combo-cell{
+  color:#fff !important;
+}
+.combo-cell{ background:transparent }
+
+/* 3D roll animation */
+.dice-grid{
+  -webkit-perspective: 900px;
+  perspective: 900px;
+}
+.die{
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform;
+  transition: transform 360ms cubic-bezier(.2,.9,.3,1), box-shadow 220ms;
+}
+.dice-grid.rolling .die:not(.kept){
+  -webkit-animation: die-roll 420ms cubic-bezier(.22,.9,.32,1) both;
+  animation: die-roll 420ms cubic-bezier(.22,.9,.32,1) both;
+  -webkit-transform-origin: center center;
+  transform-origin: center center;
+}
+@-webkit-keyframes die-roll{
+  0%{ -webkit-transform: rotateX(0deg) rotateY(0deg) translateZ(0); transform: rotateX(0deg) rotateY(0deg) translateZ(0); }
+  30%{ -webkit-transform: rotateX(720deg) rotateY(360deg) translateZ(8px); transform: rotateX(720deg) rotateY(360deg) translateZ(8px); }
+  60%{ -webkit-transform: rotateX(1080deg) rotateY(720deg) translateZ(6px); transform: rotateX(1080deg) rotateY(720deg) translateZ(6px); }
+  100%{ -webkit-transform: rotateX(1440deg) rotateY(1080deg) translateZ(0); transform: rotateX(1440deg) rotateY(1080deg) translateZ(0); }
+}
+@keyframes die-roll{
+  0%{ transform: rotateX(0deg) rotateY(0deg) translateZ(0); }
+  30%{ transform: rotateX(720deg) rotateY(360deg) translateZ(8px); }
+  60%{ transform: rotateX(1080deg) rotateY(720deg) translateZ(6px); }
+  100%{ transform: rotateX(1440deg) rotateY(1080deg) translateZ(0); }
+}
+.die.pop{
+  -webkit-transform: scale(1.06) translateZ(6px);
+  transform: scale(1.06) translateZ(6px);
+  box-shadow:0 18px 40px rgba(2,6,23,0.32);
+}
+.die .pips{ width:64%; height:64%; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:6px; align-items:center; justify-items:center }
+.die .pip{ width:10px; height:10px; background:var(--texte); border-radius:50%; box-shadow:0 2px 6px rgba(2,6,23,0.28); opacity:0.95 }
+.die .pip.hidden-pip{ opacity:0; transform:scale(0.8); }
+.die .pip.pos-1{ grid-column:1; grid-row:1 }
+.die .pip.pos-2{ grid-column:2; grid-row:1 }
+.die .pip.pos-3{ grid-column:3; grid-row:1 }
+.die .pip.pos-4{ grid-column:1; grid-row:2 }
+.die .pip.pos-5{ grid-column:2; grid-row:2 }
+.die .pip.pos-6{ grid-column:3; grid-row:2 }
+.die .pip.pos-7{ grid-column:1; grid-row:3 }
+.die .pip.pos-8{ grid-column:2; grid-row:3 }
+.die .pip.pos-9{ grid-column:3; grid-row:3 }
+
+.die .pip{ transition:opacity .12s ease, transform .12s ease }
+.fourtwoone-controls{ display:flex; gap:12px; align-items:center; justify-content:center }
+.fourtwoone-controls #roll421Status{ min-width:200px; text-align:center }
+
+/* MINI-DICE used in combos table: small 3x3 dice visuals (slightly reduced) */
+.mini-dice-row{ display:flex; align-items:center; gap:6px }
+.mini-die{ width:25px; height:25px; border-radius:5px; background:#fff; border:1px solid rgba(0,0,0,0.10); display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); padding:3px; box-sizing:border-box }
+.mini-die .pip{ width:4px; height:4px; background:transparent; border-radius:50%; display:block; margin:auto; opacity:0 }
+.mini-die[data-value="1"] .pip:nth-child(5){ opacity:1; background:var(--fond-principal) }
+.mini-die[data-value="2"] .pip:nth-child(1), .mini-die[data-value="2"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal) }
+.mini-die[data-value="3"] .pip:nth-child(1), .mini-die[data-value="3"] .pip:nth-child(5), .mini-die[data-value="3"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal) }
+.mini-die[data-value="4"] .pip:nth-child(1), .mini-die[data-value="4"] .pip:nth-child(3), .mini-die[data-value="4"] .pip:nth-child(7), .mini-die[data-value="4"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal) }
+.mini-die[data-value="5"] .pip:nth-child(1), .mini-die[data-value="5"] .pip:nth-child(3), .mini-die[data-value="5"] .pip:nth-child(5), .mini-die[data-value="5"] .pip:nth-child(7), .mini-die[data-value="5"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal) }
+.mini-die[data-value="6"] .pip:nth-child(1), .mini-die[data-value="6"] .pip:nth-child(2), .mini-die[data-value="6"] .pip:nth-child(3), .mini-die[data-value="6"] .pip:nth-child(7), .mini-die[data-value="6"] .pip:nth-child(8), .mini-die[data-value="6"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal) }
+.combo-mini-dice-cell{ display:flex; align-items:center; gap:6px }
+.combo-mini-dice-cell .combo-label{ margin-left:6px; font-size:0.9em; color:#dbeafe }
+
+/* Topbar mini-dice: horizontal and smaller */
+.mini-dice-topbar{ display:flex; gap:6px; align-items:center; justify-content:center }
+.mini-dice-topbar .mini-die{ width:18px; height:18px; padding:2px; border-radius:4px; box-shadow:none; border:1px solid rgba(255,255,255,0.06); background:transparent }
+.mini-dice-topbar .mini-die .pip{ width:2px; height:2px }
+.mini-dice-topbar .mini-die[data-value="1"] .pip:nth-child(5),
+.mini-dice-topbar .mini-die[data-value="2"] .pip:nth-child(1), .mini-dice-topbar .mini-die[data-value="2"] .pip:nth-child(9),
+.mini-dice-topbar .mini-die[data-value="3"] .pip:nth-child(1), .mini-dice-topbar .mini-die[data-value="3"] .pip:nth-child(5), .mini-dice-topbar .mini-die[data-value="3"] .pip:nth-child(9),
+.mini-dice-topbar .mini-die[data-value="4"] .pip:nth-child(1), .mini-dice-topbar .mini-die[data-value="4"] .pip:nth-child(3), .mini-dice-topbar .mini-die[data-value="4"] .pip:nth-child(7), .mini-dice-topbar .mini-die[data-value="4"] .pip:nth-child(9),
+.mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(1), .mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(3), .mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(5), .mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(7), .mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(9),
+.mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(1), .mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(2), .mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(3), .mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(7), .mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(8), .mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal) }
+
+@media(max-width:420px){
+  .die{ width:64px; height:64px; font-size:28px }
+}
+
 /************************************************************
   4. PAGE TIMER « SABLIER » + RAPPEL TOPBAR
 ************************************************************/
@@ -1089,6 +1334,22 @@ input[type=text],
 
 .yams-bold{
   font-weight:700;
+}
+
+/* Emphase pour bonus et total Yams */
+.yams-bonus-cell{
+  color:#16a34a; /* green */
+  font-weight:800;
+}
+.yams-total-cell{
+  color:#0b5fff; /* blue */
+  font-weight:900;
+  font-size:1.25rem;
+}
+.yams-total-row td:first-child{ /* label 'Total' */
+  color:#0b5fff;
+  font-weight:900;
+  font-size:1.05rem;
 }
 
 /* 5.4 Inputs Yams */

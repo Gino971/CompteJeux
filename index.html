@@ -14,6 +14,26 @@
     <button id="tabYamsBtn" class="btn">Yams</button>
     <button id="startGameBtn" class="btn">Scrabble</button>
     <button id="tabSimonBtn" class="btn">Simon</button>
+    <button id="tabMorpionBtn" class="btn">Morpion</button>
+    <button id="tab421Btn" class="btn" aria-label="Onglet 421">
+      <span class="mini-dice-topbar" aria-hidden="true">
+        <span class="mini-die" data-value="4">
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+        </span>
+        <span class="mini-die" data-value="2">
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+        </span>
+        <span class="mini-die" data-value="1">
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+        </span>
+      </span>
+    </button>
     <button id="tabTimerBtn" class="btn">Minuteur</button>
     <div class="spacer"></div>
     <div id="topbarTimerReminder" class="topbar-timer-reminder" title="Ouvrir le minuteur">1:00</div>
@@ -115,6 +135,69 @@
         </div>
       </div>
     </section>
+
+    <section id="morpionTab" class="hidden">
+      <div class="box morpion-box">
+        <h3>Morpion</h3>
+        <div class="morpion-game">
+          <div id="morpionBoard" class="morpion-grid" role="grid" aria-label="Morpion">
+            <!-- cases générées par JS -->
+          </div>
+          <div class="morpion-controls">
+            <button id="morpionRestart" class="btn">Nouvelle partie</button>
+            <button id="morpionToggleAI" class="btn ghost">Jouer vs IA</button>
+            <div id="morpionStatus" class="small" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="421Tab" class="hidden">
+      <div class="box fourtwoone-box">
+        <h3>421</h3>
+        <div class="fourtwoone-combos box fourtwoone-combos--top fourtwoone-combos--floating">
+          <h4>Combinaisons</h4>
+          <table id="fourtwooneCombos" class="small"></table>
+        </div>
+
+        <div class="fourtwoone-game">
+          <div class="fourtwoone-info">
+            <div id="current421Player" class="small">Joueur: —</div>
+            <div id="current421RollCount" class="small">Lancer: 0/3</div>
+            <div id="fourtwoonePhaseBox" class="small fourtwoone-phase-box">
+              <div id="fourtwoonePhaseLabel">Phase: 1</div>
+              <div id="fourtwoonePotDisplay">Pot: 0</div>
+            </div>
+          </div>
+          <div class="fourtwoone-layout">
+            <div class="fourtwoone-tokens box fourtwoone-tokens--panel">
+              <h4>Jetons joueurs</h4>
+              <table id="fourtwoonePlayersTokens" class="small"></table>
+            </div>
+          </div>
+          <div class="fourtwoone-dice-row">
+            <div id="fourtwooneCombo" class="fourtwoone-combo-box box small">
+              <div id="fourtwooneComboLabel" class="small">Combinaison: —</div>
+              <div id="fourtwooneComboTokens" class="small">Jetons: —</div>
+            </div>
+            <div id="fourTwoOneBoard" class="dice-grid" aria-live="polite" aria-label="Trois dés"> 
+              <!-- dés générés par JS -->
+            </div>
+          </div>
+          <div class="fourtwoone-controls">
+            <button id="roll421Btn" class="btn primary">Lancer</button>
+            <button id="accept421Btn" class="btn">Accepter</button>
+            <button id="end421TurnBtn" class="btn ghost">Terminer</button>
+            <button id="reset421Btn" class="btn ghost">Réinitialiser</button>
+            <div id="roll421Status" class="small"></div>
+          </div>
+          <div class="fourtwoone-history">
+            <h4 class="fourtwoone-history__title">Historique</h4>
+            <div id="fourtwooneHistory" class="small"></div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- seeds embedded -->
@@ -136,6 +219,8 @@
 
   <script src="script.js"></script>
   <script src="simon.js"></script>
+  <script src="morpion.js"></script>
+  <script src="421.js"></script>
   <script src="timer.js"></script>
 </body>
 </html>

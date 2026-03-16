@@ -77,6 +77,8 @@ function bind(){
   const _tabLists = $('tabListsBtn'); if(_tabLists) _tabLists.addEventListener('click', ()=>showTab('lists'))
   const _tabYams = $('tabYamsBtn'); if(_tabYams) _tabYams.addEventListener('click', ()=>{ renderYams(); showTab('yams') })
   const _tabSimon = $('tabSimonBtn'); if(_tabSimon) _tabSimon.addEventListener('click', ()=> showTab('simon'))
+  const _tabMorpion = $('tabMorpionBtn'); if(_tabMorpion) _tabMorpion.addEventListener('click', ()=> showTab('morpion'))
+  const _tab421 = $('tab421Btn'); if(_tab421) _tab421.addEventListener('click', ()=> showTab('421'))
   const _tabTimer = $('tabTimerBtn'); if(_tabTimer) _tabTimer.addEventListener('click', ()=> showTab('timer'))
   // Bouton reset Yams
   setTimeout(()=>{
@@ -203,7 +205,7 @@ function bind(){
 function showTab(name){
   const bw = $('boardWordcheck')
   // hide all main tabs first
-  const ids = ['listsTab','boardTab','yamsTab','simonTab','timerTab']
+  const ids = ['listsTab','boardTab','yamsTab','simonTab','timerTab','morpionTab','421Tab']
   ids.forEach(id => { const el = document.getElementById(id); if(!el) return; el.classList.add('hidden') })
   if(bw) { bw.classList.remove('active'); bw.setAttribute('aria-hidden','true') }
   // show requested tab
@@ -216,6 +218,10 @@ function showTab(name){
     $('yamsTab').classList.remove('hidden')
   } else if(name === 'simon') {
     const st = $('simonTab'); if(st) st.classList.remove('hidden')
+  } else if(name === 'morpion') {
+    const mt = $('morpionTab'); if(mt) mt.classList.remove('hidden')
+  } else if(name === '421') {
+    const ht = $('421Tab'); if(ht) ht.classList.remove('hidden')
   } else if(name === 'timer') {
     const tt = $('timerTab'); if(tt) tt.classList.remove('hidden')
   }
@@ -504,7 +510,7 @@ function renderYams() {
     rows += '</tr>';
   });
   // Ligne de bonus
-  rows += '<tr><td class="yams-bold">Bonus (+35 si ≥63)</td>';
+  rows += '<tr class="yams-bonus-row"><td class="yams-bold">Bonus (+35 si ≥63)</td>';
   players.forEach(function(p) {
     var upperSum = 0;
     ['as','deux','trois','quatre','cinq','six'].forEach(function(key) {
@@ -514,11 +520,11 @@ function renderYams() {
       upperSum += v;
     });
     var bonus = upperSum >= 63 ? 35 : 0;
-    rows += '<td class="yams-cell-center yams-bold">' + bonus + '</td>';
+    rows += '<td class="yams-cell-center yams-bold yams-bonus-cell">' + bonus + '</td>';
   });
   rows += '</tr>';
   // Ligne de total en bas
-  rows += '<tr><td class="yams-bold">Total</td>';
+  rows += '<tr class="yams-total-row"><td class="yams-bold">Total</td>';
   players.forEach(function(p) {
     var total = 0;
     yamsFigures.forEach(function(fig) {
@@ -538,7 +544,7 @@ function renderYams() {
       upperSum += (window.yamsState[p.id] && typeof window.yamsState[p.id][key] !== 'undefined') ? Number(window.yamsState[p.id][key]) : 0;
     });
     if (upperSum >= 63) total += 35;
-    rows += '<td class="yams-cell-center yams-bold">' + total + '</td>';
+    rows += '<td class="yams-cell-center yams-bold yams-total-cell">' + total + '</td>';
   });
   rows += '</tr>';
   tbody.innerHTML = rows;
