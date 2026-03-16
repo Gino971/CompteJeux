@@ -912,6 +912,9 @@ input[type=text],
 }
 .fourtwoone-combos th{ text-align:left; font-weight:700 }
 .fourtwoone-tokens td.actions{ text-align:right }
+.fourtwoone-tokens td.figure{ width:120px; color:#dbeafe; font-weight:700 }
+.fourtwoone-tokens .player-figure .mini-dice-row{ display:inline-flex; gap:6px; vertical-align:middle }
+.fourtwoone-tokens .player-figure .mini-die{ transform:scale(0.7); filter:drop-shadow(0 1px 0 rgba(0,0,0,0.15)) }
 .token-badge{ display:inline-block; min-width:40px; text-align:center; padding:4px 8px; border-radius:8px; background:rgba(11,95,255,0.08); color:#0b5fff; font-weight:700 }
 .token-btn{ padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.04); background:transparent; cursor:pointer }
 
@@ -1003,7 +1006,7 @@ td.combo-active-td .combo-cell{
 
 /* Topbar mini-dice: horizontal and smaller */
 .mini-dice-topbar{ display:flex; gap:6px; align-items:center; justify-content:center }
-.mini-dice-topbar .mini-die{ width:18px; height:18px; padding:2px; border-radius:4px; box-shadow:none; border:1px solid rgba(255,255,255,0.06); background:transparent }
+.mini-dice-topbar .mini-die{ width:18px; height:18px; padding:2px; border-radius:4px; box-shadow:none; border:1px solid rgba(0,0,0,0.10); background:#ffffff }
 .mini-dice-topbar .mini-die .pip{ width:2px; height:2px }
 .mini-dice-topbar .mini-die[data-value="1"] .pip:nth-child(5),
 .mini-dice-topbar .mini-die[data-value="2"] .pip:nth-child(1), .mini-dice-topbar .mini-die[data-value="2"] .pip:nth-child(9),

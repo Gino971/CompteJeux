@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function(){
   ];
   // tokens per player (modifiable) — default 10 jetons par joueur
   const tokens = {};
+  const figures = {};
   const TOKENS_KEY = 'scorekeeper_421_tokens_v1';
   const HISTORY_KEY = 'scorekeeper_421_history_v1';
   const POT_KEY = 'scorekeeper_421_pot_v1';
@@ -52,6 +53,15 @@ document.addEventListener('DOMContentLoaded', function(){
       }
     }catch(e){ pot = 21 }
   }
+
+  // helper: render a single mini-die (3x3 pips) as HTML string
+  function miniDieHTML(v) {
+    let html = '<div class="mini-die" data-value="' + (v||0) + '">';
+    for (let i = 0; i < 9; i++) html += '<span class="pip"></span>';
+    html += '</div>';
+    return html;
+  }
+  function miniDiceRow(values){ return '<div class="mini-dice-row">' + (values||[]).map(v=>miniDieHTML(v)).join('') + '</div>'; }
   function savePot(){ try{ localStorage.setItem(POT_KEY, JSON.stringify(Number(pot||0))) }catch(e){} }
 
   function renderPhaseUI(){
@@ -74,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function(){
       }
     }catch(e){ /* ignore */ }
     // ensure defaults for current players (start with 0 tokens)
-    players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0 });
+    players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0; if(typeof figures[p.id] === 'undefined') figures[p.id] = ''; });
   }
 
   function saveTokens(){
@@ -103,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const s = (typeof state !== 'undefined' && Array.isArray(state.game) && state.game.length) ? state.game.slice() : ((window.state && Array.isArray(window.state.game) && window.state.game.length) ? window.state.game.slice() : [{ id: 'solo', name: 'Joueur' }]);
     players = s;
     // ensure tokens exist for new players
-    players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0 });
+    players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0; if(typeof figures[p.id] === 'undefined') figures[p.id] = ''; });
     // persist any changes
     saveTokens();
   }
@@ -115,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const history = {};
   let currentRoundResults = {}; // pid -> { dice, eval }
   let roundIndex = 0;
+  let dechargeRounds = 0; // count rounds completed during phase 2
   let autoFinalizeTimer = null;
 
   function createDieEl(value, idx){
@@ -172,21 +183,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(!el) return;
     const $table = el;
     $table.innerHTML = '';
-
-    function miniDieHTML(v) {
-      let html = '<div class="mini-die" data-value="' + v + '">';
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-          html += '<span class="pip"></span>';
-        }
-      }
-      html += '</div>';
-      return html;
-    }
-
-    function miniDiceRow(values) {
-      return '<div class="mini-dice-row">' + values.map(v => miniDieHTML(v)).join('') + '</div>';
-    }
+    // use global helpers to produce mini-dice HTML
 
     const tbody = document.createElement('tbody');
     for(let i=0;i<combos.length;i+=2){
@@ -280,18 +277,11 @@ document.addEventListener('DOMContentLoaded', function(){
     if(!el) return;
     const rows = players.map(p => {
       const t = tokens[p.id] || 0;
-      return `<tr data-player="${p.id}"><td>${escapeHtml(p.name)}</td><td class="actions"><span class="token-badge">${t}</span> <button class="token-btn" data-action="minus" data-player="${p.id}">-</button> <button class="token-btn" data-action="plus" data-player="${p.id}">+</button></td></tr>`;
+      const fig = figures[p.id] || null;
+      const figHtml = (fig && fig.dice && Array.isArray(fig.dice)) ? miniDiceRow(fig.dice) : (fig && fig.label ? escapeHtml(fig.label) : '—');
+      return `<tr data-player="${p.id}"><td>${escapeHtml(p.name)}</td><td class="figure"><div class="player-figure">${figHtml}</div></td><td class="actions"><span class="token-badge">${t}</span></td></tr>`;
     }).join('');
     el.innerHTML = rows;
-    // attach handlers
-    el.querySelectorAll('.token-btn').forEach(btn => btn.addEventListener('click', function(){
-      const pid = this.getAttribute('data-player');
-      const act = this.getAttribute('data-action');
-      if(!pid) return;
-      if(act==='plus'){ tokens[pid] = (tokens[pid]||0)+1 } else { tokens[pid] = Math.max(0,(tokens[pid]||0)-1) }
-      saveTokens();
-      renderPlayerTokens();
-    }));
   }
 
   function renderComboInfo(vals){
@@ -340,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function(){
       transfers.push({ pid: loser.pid, name: loser.name, before: beforeL, delta: give, after: tokens[loser.pid] });
       saveTokens(); savePot();
       // attach transfers to last round entry in history if present
-      if(history._rounds && history._rounds.length){ const last = history._rounds[history._rounds.length-1]; last.transfers = transfers; saveHistory(); }
+      // history disabled: do not attach transfers
       // if pot empty, switch to phase 2
       if((pot||0) <= 0){ gamePhase = 2; renderPhaseUI(); }
     } else {
@@ -354,13 +344,18 @@ document.addEventListener('DOMContentLoaded', function(){
       transfers.push({ pid: winner.pid, name: winner.name, before: beforeW, delta: -give, after: tokens[winner.pid] });
       transfers.push({ pid: loser.pid, name: loser.name, before: beforeL, delta: give, after: tokens[loser.pid] });
       saveTokens();
-      if(history._rounds && history._rounds.length){ const last = history._rounds[history._rounds.length-1]; last.transfers = transfers; saveHistory(); }
+      // history disabled: do not attach transfers
       // check end condition: only one player left with tokens
       const playersWithTokens = players.filter(p=> (tokens[p.id]||0) > 0 ).length;
       if(playersWithTokens <= 1){
         // game over
         status.textContent = 'Partie terminée';
         rollBtn && (rollBtn.disabled = true);
+        // determine winner (player with remaining tokens) or fallback to highest tokens
+        let winnerObj = players.find(p=> (tokens[p.id]||0) > 0);
+        if(!winnerObj){ const sorted = players.slice().sort((a,b)=> (tokens[b.id]||0) - (tokens[a.id]||0)); winnerObj = sorted[0]; }
+        const winnerName = winnerObj ? winnerObj.name : '—';
+        try{ showWinnerBanner(winnerName); }catch(e){}
       }
     }
   }
@@ -538,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function(){
     currentPlayerIndex = 0;
     // reset pot and tokens for new game start
     pot = 21;
-    players.forEach(p=>{ tokens[p.id] = 0 });
+    players.forEach(p=>{ tokens[p.id] = 0; figures[p.id] = ''; });
     gamePhase = 1;
     // clear history
     history._rounds = [];
@@ -557,10 +552,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const results = players.map(p=>({ pid: p.id, name: p.name, dice: currentRoundResults[p.id].dice, eval: currentRoundResults[p.id].eval }));
     results.sort((a,b)=> b.eval.score - a.eval.score);
     const roundLabel = `M${roundIndex+1}`;
-    history._rounds = history._rounds || [];
-      history._rounds.push({ round: roundLabel, results: results.map(r=>({ pid: r.pid, name: r.name, label: r.eval.label, tokens: tokensForDice(r.dice), dice: r.dice })) });
-    // persist history at round end (transfers may be attached shortly after)
-    saveHistory();
+    // persist history at round end (disabled)
     roundIndex++;
     currentRoundResults = {};
     renderHistory();
@@ -570,9 +562,22 @@ document.addEventListener('DOMContentLoaded', function(){
     applyRoundTransfers(results);
     renderPlayerTokens();
     status.textContent = `Tour ${roundLabel} — gagnant: ${winner.name} (${winner.eval.label})`;
-    // next round starts with loser
-    const nextIndex = players.findIndex(p=>p.id === loser.pid);
-    if(nextIndex !== -1) currentPlayerIndex = nextIndex; else currentPlayerIndex = 0;
+    // handle decharge end condition: count rounds in phase 2
+    if(gamePhase === 2){
+      dechargeRounds = (dechargeRounds || 0) + 1;
+    }
+    // if we are in decharge and at least one decharge round completed, a player with 0 jetons wins
+    if(gamePhase === 2 && dechargeRounds >= 1){
+      const zeroPlayer = players.find(p=> (tokens[p.id]||0) === 0 );
+      if(zeroPlayer){
+        // end game: update players table and announce winner via modal
+        renderPlayerTokens();
+        try{ showWinnerBanner(zeroPlayer.name); }catch(e){}
+        return; // stop further round initialization
+      }
+    }
+    // next round starts with first player (wrap to J1)
+    currentPlayerIndex = 0;
     renderPhaseUI();
   }
 
@@ -586,6 +591,10 @@ document.addEventListener('DOMContentLoaded', function(){
     // record final result for this player (always use current dice — ensures 3rd roll is taken)
     const pid = players[currentPlayerIndex].id;
     currentRoundResults[pid] = { dice: dice.slice(), eval: evaluateDice(dice.slice()) };
+    // store figure (label + dice) for player UI
+    try{ figures[pid] = { label: (currentRoundResults[pid].eval && currentRoundResults[pid].eval.label) ? currentRoundResults[pid].eval.label : '', dice: currentRoundResults[pid].dice.slice() }; }catch(e){}
+    // update players table immediately
+    try{ renderPlayerTokens(); }catch(e){}
     // render combo info for the finalized combination so the combos table cell stays highlighted
     try{ renderComboInfo(currentRoundResults[pid].dice.slice()); }catch(e){}
     checkRoundComplete();
@@ -608,10 +617,18 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   function renderHistory(clear){
-    // history display disabled — clear UI
+    if(clear){ for(const k in history) if(k!=='_rounds') delete history[k]; }
     if(!historyEl) return;
     historyEl.innerHTML = '';
-    return;
+    // render round summaries
+    if(history._rounds && history._rounds.length){
+      history._rounds.forEach(r=>{
+        const h = document.createElement('div');
+        h.style.marginBottom = '6px';
+        h.innerHTML = `<strong>${escapeHtml(r.round)}</strong>: ` + (r.results && r.results.length ? r.results.map(rr=>escapeHtml(`${rr.name} (${rr.label}) ${rr.tokens? '('+rr.tokens+'j)':''}`)).join(', ') : '');
+        historyEl.appendChild(h);
+      });
+    }
   }
 
   // init three empty dice
@@ -629,6 +646,25 @@ document.addEventListener('DOMContentLoaded', function(){
   rollCountEl && (rollCountEl.textContent = `Lancer: ${rollCount}/${maxRolls}`);
   renderHistory(true);
   renderPhaseUI();
+
+  // Winner modal controls for 421
+  function showWinnerBanner(name){
+    try{
+      const m = document.getElementById('fourtwooneWinnerModal');
+      const title = document.getElementById('fourtwooneWinnerTitle');
+      const text = document.getElementById('fourtwooneWinnerText');
+      if(title) title.textContent = 'Partie terminée';
+      if(text) text.textContent = `Le vainqueur est ${name}`;
+      if(m) m.classList.remove('hidden');
+      try{ if(rollBtn) rollBtn.disabled = true; }catch(e){}
+      try{ const ab = document.getElementById('accept421Btn'); if(ab) ab.disabled = true; }catch(e){}
+    }catch(e){}
+  }
+  function hideWinnerBanner(){ try{ const m = document.getElementById('fourtwooneWinnerModal'); if(m) m.classList.add('hidden'); }catch(e){} }
+  const btnRejouer = document.getElementById('btnRejouer421');
+  if(btnRejouer) btnRejouer.addEventListener('click', function(){ hideWinnerBanner(); try{ if(resetBtn) resetBtn.click(); }catch(e){} });
+  const btnRetourPlayers = document.getElementById('btnRetourPlayers421');
+  if(btnRetourPlayers) btnRetourPlayers.addEventListener('click', function(){ hideWinnerBanner(); try{ document.getElementById('listsTab').classList.remove('hidden'); document.getElementById('421Tab').classList.add('hidden'); }catch(e){} });
 
   // allow clicking pot display to set initial pot
   try{
