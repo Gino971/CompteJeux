@@ -823,12 +823,14 @@ input[type=text],
   max-width:520px;
   margin:8px auto;
 }
+.fourtwoone-game{ display:flex; flex-direction:column; align-items:center; gap:12px }
 .dice-grid{
   display:flex;
   gap:12px;
   justify-content:center;
   align-items:center;
   margin:12px 0;
+  width: calc(3 * 84px + 2 * 12px);
 }
 .die{
   width:84px;
@@ -851,16 +853,22 @@ input[type=text],
 .fourtwoone-history{ max-width:520px; margin:8px auto; color:#cfe0ff }
 
 /* layout classes extracted from inline styles */
-.fourtwoone-combos--top{ min-width:260px; margin-bottom:12px }
+.fourtwoone-combos--top{ min-width:260px; }
 .fourtwoone-info{ display:flex; gap:12px; align-items:center; justify-content:center }
 .fourtwoone-layout{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center }
 .fourtwoone-tokens--panel{ min-width:260px }
+
+/* phase lon ne voit plus le nom de la phase
+abel removed from UI */
+
+/* Push the entire 421 box down so the right panel doesn't touch the topbar */
+#421Tab .fourtwoone-box{ margin-top:92px }
 .fourtwoone-history__title{ margin:8px 0 6px }
 
 /* Floating compact combos box: minimal footprint top-left */
 .fourtwoone-combos--floating{
   position:fixed;
-  top:88px; /* below topbar */
+  top:90px; /* below topbar */
   left:12px;
   width:180px;
   z-index:95;
@@ -885,10 +893,19 @@ input[type=text],
 .fourtwoone-combo-box .small{ font-size:13px }
 
 /* phase/pot display */
-.fourtwoone-phase-box{ display:flex; flex-direction:column; gap:4px; align-items:flex-start; margin-left:8px; padding:6px }
-.fourtwoone-phase-box #fourtwoonePhaseLabel{ font-weight:700; color:#ffd77a }
-.fourtwoone-phase-box #fourtwoonePotDisplay{ color:#9fe37b; font-weight:800 }
-.fourtwoone-combos--floating h4{ font-size:12px; margin:6px 0 6px; color:#cfe0ff }
+/* phase box styles removed */
+.fourtwoone-combos--floating h4{
+  font-size:20px;
+  margin:8px 0 10px;
+  color:#cfe0ff;
+  text-align:center;
+  font-weight:800;
+  letter-spacing:0.4px;
+}
+
+@media(max-width:420px){
+  .fourtwoone-combos--floating h4{ font-size:16px; margin:6px 0 8px }
+}
 .fourtwoone-combos--floating table{ width:100%; font-size:12px }
 .fourtwoone-combos--floating thead{ display:none }
 .fourtwoone-combos--floating td{ padding:4px 6px; border:none }
@@ -916,6 +933,13 @@ input[type=text],
 .fourtwoone-tokens .player-figure .mini-dice-row{ display:inline-flex; gap:6px; vertical-align:middle }
 .fourtwoone-tokens .player-figure .mini-die{ transform:scale(0.7); filter:drop-shadow(0 1px 0 rgba(0,0,0,0.15)) }
 .token-badge{ display:inline-block; min-width:40px; text-align:center; padding:4px 8px; border-radius:8px; background:rgba(11,95,255,0.08); color:#0b5fff; font-weight:700 }
+
+/* Highlight the current player's row in the tokens table */
+.fourtwoone-tokens table tr.current-player{
+  background: linear-gradient(90deg, rgba(11,95,255,0.06), rgba(11,95,255,0.02));
+  border-left:4px solid #0b5fff;
+}
+.fourtwoone-tokens table tr.current-player td{ color:#cfe0ff; font-weight:700 }
 .token-btn{ padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.04); background:transparent; cursor:pointer }
 
 /* active combo highlight */
@@ -988,8 +1012,162 @@ td.combo-active-td .combo-cell{
 .die .pip.pos-9{ grid-column:3; grid-row:3 }
 
 .die .pip{ transition:opacity .12s ease, transform .12s ease }
-.fourtwoone-controls{ display:flex; gap:12px; align-items:center; justify-content:center }
+.fourtwoone-box{ position:relative }
+.fourtwoone-controls{ display:flex; flex-direction:row; gap:8px; align-items:center; justify-content:flex-start; width: calc(3 * 84px + 2 * 12px); flex-wrap:nowrap }
 .fourtwoone-controls #roll421Status{ min-width:200px; text-align:center }
+
+/* Big remaining-rolls indicator placed left of the roll button */
+.big-rolls{
+  width:96px;
+  height:96px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:40px;
+  font-weight:800;
+  border-radius:12px;
+  background:rgba(255,255,255,0.02);
+  color:var(--texte);
+  margin-right:10px;
+}
+
+/* Pot display to the right of the Accept button */
+.fourtwoone-pot{
+  min-width:120px;
+  padding:10px 14px;
+  border-radius:12px;
+  background:rgba(0,0,0,0.06);
+  color:#9fe37b;
+  font-weight:800;
+  font-size:28px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:12px;
+}
+
+/* Phase label shown next to pot under the 421 box */
+.fourtwoone-phase-label{
+  color:#ffd77a;
+  font-weight:800;
+  font-size:18px;
+  display:inline-flex;
+  align-items:center;
+  margin-right:14px;
+}
+
+@media(max-width:420px){
+  .fourtwoone-phase-label{ font-size:16px; margin-right:8px }
+}
+
+@media(max-width:420px){
+  .fourtwoone-pot{ font-size:20px; min-width:84px; padding:8px 10px }
+}
+
+@media(max-width:420px){
+  .big-rolls{ width:64px; height:64px; font-size:28px }
+}
+
+/* Make the Lancer button occupy the dice area and sit below the dice */
+#roll421Btn{
+  flex:1 1 0;
+  min-width:100px;
+  height: 96px;
+  font-size:22px;
+  border-radius:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:0 14px;
+}
+
+@media(max-width:420px){
+  .dice-grid{ width: calc(3 * 64px + 2 * 12px); }
+  #roll421Btn{ width: calc(3 * 64px + 2 * 12px); height:64px; font-size:18px }
+}
+
+/* Make Accept same size as Lancer and stack below it */
+#accept421Btn{
+  flex:1 1 0;
+  min-width:100px;
+  height: 96px;
+  font-size:20px;
+  border-radius:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:0 12px;
+}
+
+@media(max-width:420px){
+  #accept421Btn{ width: calc(3 * 64px + 2 * 12px); height:64px; font-size:16px }
+}
+
+/* Transform reset button into a small icon in the top-right of the 421 box */
+#reset421Btn{
+  position:absolute;
+  top:54px; /* moved lower so it sits below the topbar */
+  right:10px;
+  width:36px;
+  height:36px;
+  padding:0;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.06);
+  color:var(--texte);
+  font-size:18px;
+  line-height:1;
+  text-indent:-9999px; /* visually hide label */
+  z-index:250;
+}
+
+#reset421Btn::after{
+  content: '⟳';
+  text-indent:0;
+  font-size:18px;
+  color:var(--texte);
+  display:inline-block;
+}
+
+@media(max-width:420px){
+  #reset421Btn{ width:32px; height:32px; font-size:16px }
+  #reset421Btn::after{ font-size:16px }
+}
+
+/* Transfers panel placed below the 421 box */
+.fourtwoone-transfers-bottom{
+  max-width:520px;
+  margin:8px auto;
+}
+.fourtwoone-transfers--panel{
+  min-width:260px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:linear-gradient(180deg, rgba(11,17,30,0.9), rgba(7,12,18,0.9));
+  border:1px solid rgba(255,255,255,0.03);
+  box-shadow:0 8px 28px rgba(2,6,23,0.6);
+}
+.fourtwoone-transfers-list{
+  min-height:28px;
+  color:#dbeafe;
+  font-weight:700;
+  font-size:14px;
+}
+.fourtwoone-transfers-list .transfer-entry{
+  padding:6px 8px;
+  border-radius:8px;
+  background:rgba(255,255,255,0.02);
+  margin-bottom:6px;
+}
+@media(max-width:420px){
+  .fourtwoone-transfers-bottom{ padding:0 12px; box-sizing:border-box }
+  .fourtwoone-transfers--panel{ min-width:100%; padding:8px }
+}
 
 /* MINI-DICE used in combos table: small 3x3 dice visuals (slightly reduced) */
 .mini-dice-row{ display:flex; align-items:center; gap:6px }
@@ -1584,7 +1762,7 @@ input.yams-input[type="number"]{
 
 /* Responsive: stack Simon elements on small screens */
 @media(max-width:520px){
-  .simon-wrap{ display:flex; flex-direction:column; align-items:center }
+  #accept421Btn{ width: calc(3 * 64px + 2 * 12px); height:64px; font-size:16px }
   .simon-lives{ flex-direction:row; min-width:0; gap:6px }
   .simon-actions{ height:auto; justify-content:flex-start; width:100%; max-width:420px }
   #simon-start{ height:56px }

@@ -2,10 +2,13 @@ document.addEventListener('DOMContentLoaded', function(){
   const board = document.getElementById('fourTwoOneBoard');
   const rollBtn = document.getElementById('roll421Btn');
   const resetBtn = document.getElementById('reset421Btn');
-  const status = document.getElementById('roll421Status');
+  // status element removed from DOM; provide a safe fallback object so existing
+  // assignments like `status.textContent = ...` do nothing instead of throwing.
+  let status = document.getElementById('roll421Status');
+  if(!status){ status = { textContent: '', style: {} }; }
   const endTurnBtn = document.getElementById('end421TurnBtn');
   const currentPlayerEl = document.getElementById('current421Player');
-  const rollCountEl = document.getElementById('current421RollCount');
+  const remainingRollsEl = document.getElementById('remainingRolls');
   const historyEl = document.getElementById('fourtwooneHistory');
 
   // players come from global `state.game` (declared in script.js using `let state`),
@@ -41,6 +44,22 @@ document.addEventListener('DOMContentLoaded', function(){
   // game phase: 1 = distribution from pot, 2 = give tokens to loser to get rid of them
   let gamePhase = 1;
   let pot = 0;
+  // runtime state for rolling
+  let rollCount = 0;
+  let maxRolls = 3;
+  let dice = ['','',''];
+  let selected = [false,false,false];
+  let currentPlayerIndex = 0;
+  let currentRoundResults = {};
+  let roundIndex = 0;
+  let autoFinalizeTimer = null;
+  let dechargeRounds = 0;
+  let justReachedZero = null;
+  let justEnteredPhase2 = false;
+
+  function saveTokens(){
+    try{ localStorage.setItem(TOKENS_KEY, JSON.stringify(tokens||{})); }catch(e){}
+  }
 
   function loadPot(){
     try{
@@ -72,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function(){
       if(potEl) potEl.textContent = `Pot: ${pot}`;
     }catch(e){}
   }
-
   function loadTokens(){
     try{
       const raw = localStorage.getItem(TOKENS_KEY);
@@ -87,89 +105,71 @@ document.addEventListener('DOMContentLoaded', function(){
     players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0; if(typeof figures[p.id] === 'undefined') figures[p.id] = ''; });
   }
 
-  function saveTokens(){
-    try{ localStorage.setItem(TOKENS_KEY, JSON.stringify(tokens)); }catch(e){}
+  // simple history storage for rounds (minimal implementation)
+  let history = { _rounds: [] };
+  function saveHistory(){
+    try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(history||{_rounds:[]})); }catch(e){}
   }
-
   function loadHistory(){
     try{
-      // disable loading previous history — clear stored history
-      try{ localStorage.removeItem(HISTORY_KEY); }catch(e){}
-      history._rounds = [];
-    }catch(e){ history._rounds = []; }
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if(raw){ const parsed = JSON.parse(raw); if(parsed && typeof parsed === 'object') history = parsed; }
+    }catch(e){}
+    if(!history || typeof history !== 'object') history = { _rounds: [] };
+    if(!Array.isArray(history._rounds)) history._rounds = [];
   }
 
-  function saveHistory(){
-    // history persistence disabled
-    return;
-  }
-
-  // initialize tokens from storage
-  loadTokens();
-
-  players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0 });
-
+  // synchronize `players` array from global `state.game` (if present)
   function updatePlayersFromState(){
-    const s = (typeof state !== 'undefined' && Array.isArray(state.game) && state.game.length) ? state.game.slice() : ((window.state && Array.isArray(window.state.game) && window.state.game.length) ? window.state.game.slice() : [{ id: 'solo', name: 'Joueur' }]);
-    players = s;
-    // ensure tokens exist for new players
-    players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0; if(typeof figures[p.id] === 'undefined') figures[p.id] = ''; });
-    // persist any changes
-    saveTokens();
+    try{
+      if(typeof state !== 'undefined' && Array.isArray(state.game) && state.game.length){ players = state.game.slice(); }
+      else if(window.state && Array.isArray(window.state.game) && window.state.game.length){ players = window.state.game.slice(); }
+      // ensure tokens/figures exist for each player and cleanup removed keys
+      players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0; if(typeof figures[p.id] === 'undefined') figures[p.id] = ''; });
+      for(const k in tokens) if(!players.find(p=>p.id===k)) delete tokens[k];
+      for(const k in figures) if(!players.find(p=>p.id===k)) delete figures[k];
+    }catch(e){}
   }
-  let currentPlayerIndex = 0;
-  let rollCount = 0; // number of rolls done this turn (max 3)
-  const maxRolls = 3;
-  let dice = [null,null,null];
-  let selected = [false,false,false]; // which dice are kept (true = keep). default none kept before first roll
-  const history = {};
-  let currentRoundResults = {}; // pid -> { dice, eval }
-  let roundIndex = 0;
-  let dechargeRounds = 0; // count rounds completed during phase 2
-  let autoFinalizeTimer = null;
-
+  // create a simple die element for the board
   function createDieEl(value, idx){
     const d = document.createElement('div');
     d.className = 'die';
-    // clickable to toggle selection between rolls
-    d.addEventListener('click', function(){
-      if(rollCount === 0 || rollCount >= maxRolls) return;
-      const idxLocal = Array.prototype.indexOf.call(board.children, d);
-      const i = (typeof idx === 'number') ? idx : idxLocal;
-      if(i === -1) return;
-      // toggle keep state (selected true means kept)
-      selected[i] = !selected[i];
-      d.classList.toggle('selected', selected[i]);
-      d.classList.toggle('kept', selected[i]);
-    });
-    // if numeric value provided, render pips
-    if(value && Number(value)){
-      const n = Number(value);
-      const pips = document.createElement('div');
-      pips.className = 'pips';
-      const positions = {
-        1: [5],
-        2: [1,9],
-        3: [1,5,9],
-        4: [1,3,7,9],
-        5: [1,3,5,7,9],
-        6: [1,4,7,3,6,9]
-      };
-      const map = positions[n] || [];
-      // always render nine slot elements to keep layout stable
-      for(let i=1;i<=9;i++){
-        const slot = document.createElement('span');
-        slot.className = 'pip pos-'+i;
-        if(map.indexOf(i)===-1) slot.classList.add('hidden-pip');
-        pips.appendChild(slot);
-      }
-      d.appendChild(pips);
+    d.dataset.index = typeof idx === 'number' ? String(idx) : '';
+    d.setAttribute('data-value', typeof value !== 'undefined' && value !== '' ? String(value) : '');
+    // build 3x3 pip grid
+    const pips = document.createElement('div');
+    pips.className = 'pips';
+    // mapping of face value -> pip positions (1..9)
+    const faces = {
+      1: [5],
+      2: [1,9],
+      3: [1,5,9],
+      4: [1,3,7,9],
+      5: [1,3,5,7,9],
+      6: [1,3,4,6,7,9]
+    };
+    const map = faces[Number(value)] || [];
+    for(let i=1;i<=9;i++){
+      const slot = document.createElement('span');
+      slot.className = 'pip pos-' + i;
+      if(map.indexOf(i) === -1) slot.classList.add('hidden-pip');
+      pips.appendChild(slot);
     }
+    d.appendChild(pips);
     // reflect current kept state if index passed
-    if(typeof idx === 'number' && selected[idx]){
-      d.classList.add('selected');
-      d.classList.add('kept');
-    }
+    try{
+      if(typeof idx === 'number' && selected[idx]){ d.classList.add('selected'); d.classList.add('kept'); }
+      // allow toggling kept dice by clicking the die
+      d.style.cursor = 'pointer';
+      d.addEventListener('click', function(evt){
+        try{
+          if(typeof idx !== 'number') return;
+          selected[idx] = !selected[idx];
+          d.classList.toggle('selected', !!selected[idx]);
+          d.classList.toggle('kept', !!selected[idx]);
+        }catch(e){}
+      });
+    }catch(e){}
     return d;
   }
 
@@ -282,81 +282,92 @@ document.addEventListener('DOMContentLoaded', function(){
       return `<tr data-player="${p.id}"><td>${escapeHtml(p.name)}</td><td class="figure"><div class="player-figure">${figHtml}</div></td><td class="actions"><span class="token-badge">${t}</span></td></tr>`;
     }).join('');
     el.innerHTML = rows;
-  }
-
-  function renderComboInfo(vals){
+    // highlight current player row
     try{
-      const labelEl = document.getElementById('fourtwooneComboLabel');
-      const tokensEl = document.getElementById('fourtwooneComboTokens');
-      if(!labelEl || !tokensEl) return;
-      if(!vals || !Array.isArray(vals) || vals.length<3 || vals.every(v=>!v)){
-        labelEl.textContent = 'Combinaison: —';
-        tokensEl.textContent = 'Jetons: —';
-        return;
+      const cur = players[currentPlayerIndex] && players[currentPlayerIndex].id;
+      if(cur){
+        const r = el.querySelector('tr[data-player="' + cur + '"]');
+        if(r){ r.classList.add('current-player'); }
       }
-      const evalRes = evaluateDice(vals.slice());
-      const t = tokensForDice(vals.slice());
-      const lab = (evalRes && evalRes.label ? evalRes.label : '—');
-      labelEl.textContent = 'Combinaison: ' + lab;
-      tokensEl.textContent = 'Jetons: ' + (typeof t === 'number' ? t : '—');
-      // highlight in combos table
-      highlightCombo(lab, t, (evalRes && typeof evalRes.score !== 'undefined') ? evalRes.score : undefined);
     }catch(e){}
   }
 
+  function renderComboInfo(vals){
+    // removed: combo info box was deleted from the UI; highlighting is handled directly
+  }
+
   function applyRoundTransfers(results){
-    // results: ordered array (winner first) with { pid, name, dice }
+    // Simplified transfer logic:
+    // - Phase 1 (charge) unchanged: pot -> worst player.
+    // - Phase 2 (décharge): best combo gives tokensForDice(best) to worst combo.
     if(!results || !results.length) return;
-    const winner = results[0];
-    // determine loser as the player with the lowest combination value (tokensForDice)
-    const tokenVals = results.map(r => ({ pid: r.pid, name: r.name, dice: r.dice, eval: r.eval, val: Number(tokensForDice(r.dice) || 0) }));
-    let minVal = Math.min(...tokenVals.map(x=>x.val));
-    let losers = tokenVals.filter(x=>x.val === minVal);
-    let loser = null;
-    if(losers.length === 1){ loser = losers[0]; }
-    else {
-      // tie-break: pick the one with the lowest eval.score
-      losers.sort((a,b)=> a.eval.score - b.eval.score);
-      loser = losers[0];
-    }
     const transfers = [];
+    const tokensBefore = Object.assign({}, tokens);
+    // helper to compute combo index from `combos`
+    function comboIndexForDice(vals){
+      try{
+        const norm = (vals||[]).slice().map(n=>Number(n)||0).sort((a,b)=>a-b);
+        for(let i=0;i<combos.length;i++){
+          const samp = (combos[i].sample||[]).slice().map(n=>Number(n)||0).sort((a,b)=>a-b);
+          if(samp.length === norm.length && samp.every((v,idx)=> v === norm[idx])) return i;
+        }
+        for(let i=0;i<combos.length;i++){ if(String(combos[i].label||'').toLowerCase().indexOf('autre') !== -1) return i; }
+      }catch(e){}
+      return combos.length - 1;
+    }
+    // build considered list from results
+    const considered = (results||[]).map(r=>({ pid: r.pid, name: r.name, dice: r.dice||[], eval: r.eval||{score:0}, val: Number(tokensForDice(r.dice)||0), comboIdx: comboIndexForDice(r.dice||[]) }));
     if(gamePhase === 1){
-      // Phase 1: loser receives tokens equal to the highest combination value among all players (from the pot)
-      const bestVal = Math.max(0, ...results.map(r => Number(tokensForDice(r.dice) || 0)));
+      // existing behavior: worst player receives from pot amount = bestVal limited by pot
+      let worst = considered.slice().sort((a,b)=>{
+        if(a.val !== b.val) return a.val - b.val; // smaller val worse
+        if(a.comboIdx !== b.comboIdx) return b.comboIdx - a.comboIdx; // larger idx worse
+        if(a.eval && b.eval && a.eval.score !== b.eval.score) return a.eval.score - b.eval.score; // smaller score worse
+        return players.findIndex(p=>p.id===a.pid) - players.findIndex(p=>p.id===b.pid);
+      })[0];
+      const bestVal = Math.max(0, ...considered.map(c=> Number(c.val||0)));
       const give = Math.min(bestVal, pot || 0);
-      const beforeL = Number(tokens[loser.pid]||0);
-      tokens[loser.pid] = beforeL + give;
+      const beforeL = Number(tokens[worst.pid]||0);
+      tokens[worst.pid] = beforeL + give;
       pot = Math.max(0, (pot||0) - give);
-      transfers.push({ pid: loser.pid, name: loser.name, before: beforeL, delta: give, after: tokens[loser.pid] });
+      transfers.push({ pid: worst.pid, name: worst.name, before: beforeL, delta: give, after: tokens[worst.pid] });
       saveTokens(); savePot();
-      // attach transfers to last round entry in history if present
-      // history disabled: do not attach transfers
-      // if pot empty, switch to phase 2
-      if((pot||0) <= 0){ gamePhase = 2; renderPhaseUI(); }
-    } else {
-      // Phase 2: winner gives tokens equal to his combination value to the loser (loser determined above)
-      const giveVal = tokensForDice(winner.dice) || 0;
-      const beforeW = Number(tokens[winner.pid]||0);
-      const give = Math.min(giveVal, beforeW);
-      tokens[winner.pid] = Math.max(0, beforeW - give);
-      const beforeL = Number(tokens[loser.pid]||0);
-      tokens[loser.pid] = beforeL + give;
-      transfers.push({ pid: winner.pid, name: winner.name, before: beforeW, delta: -give, after: tokens[winner.pid] });
-      transfers.push({ pid: loser.pid, name: loser.name, before: beforeL, delta: give, after: tokens[loser.pid] });
-      saveTokens();
-      // history disabled: do not attach transfers
-      // check end condition: only one player left with tokens
-      const playersWithTokens = players.filter(p=> (tokens[p.id]||0) > 0 ).length;
-      if(playersWithTokens <= 1){
-        // game over
-        status.textContent = 'Partie terminée';
-        rollBtn && (rollBtn.disabled = true);
-        // determine winner (player with remaining tokens) or fallback to highest tokens
-        let winnerObj = players.find(p=> (tokens[p.id]||0) > 0);
-        if(!winnerObj){ const sorted = players.slice().sort((a,b)=> (tokens[b.id]||0) - (tokens[a.id]||0)); winnerObj = sorted[0]; }
-        const winnerName = winnerObj ? winnerObj.name : '—';
-        try{ showWinnerBanner(winnerName); }catch(e){}
-      }
+      try{ const el = document.getElementById('fourtwooneTransfers'); if(el && transfers.length){ el.innerHTML=''; const n=document.createElement('div'); n.className='transfer-item'; n.textContent = `${worst.name} a ramassé ${Number(give)||0} jeton${give>1?'s':''}`; el.appendChild(n); } }catch(e){}
+      if((pot||0) <= 0){ gamePhase = 2; dechargeRounds = 0; justReachedZero = null; justEnteredPhase2 = true; renderPhaseUI(); }
+      return;
+    }
+    // Phase 2: best gives to worst
+    const best = considered.slice().sort((a,b)=>{
+      if(a.comboIdx !== b.comboIdx) return a.comboIdx - b.comboIdx; // smaller index better
+      if((b.eval&&b.eval.score||0) !== (a.eval&&a.eval.score||0)) return (b.eval&&b.eval.score||0) - (a.eval&&a.eval.score||0); // larger score better
+      return players.findIndex(p=>p.id===a.pid) - players.findIndex(p=>p.id===b.pid);
+    })[0];
+    const worst = considered.slice().sort((a,b)=>{
+      if(a.comboIdx !== b.comboIdx) return b.comboIdx - a.comboIdx; // larger index worse
+      if((a.eval&&a.eval.score||0) !== (b.eval&&b.eval.score||0)) return (a.eval&&a.eval.score||0) - (b.eval&&b.eval.score||0); // smaller score worse
+      return players.findIndex(p=>p.id===a.pid) - players.findIndex(p=>p.id===b.pid);
+    })[0];
+    if(!best || !worst || best.pid === worst.pid) return;
+    const giveVal = Number(tokensForDice(best.dice) || 0);
+    const beforeW = Number(tokens[best.pid]||0);
+    const give = Math.min(giveVal, beforeW);
+    tokens[best.pid] = Math.max(0, beforeW - give);
+    const beforeL = Number(tokens[worst.pid]||0);
+    tokens[worst.pid] = beforeL + give;
+    saveTokens();
+    transfers.push({ pid: best.pid, name: best.name, before: beforeW, delta: -give, after: tokens[best.pid] });
+    transfers.push({ pid: worst.pid, name: worst.name, before: beforeL, delta: give, after: tokens[worst.pid] });
+    try{ const el = document.getElementById('fourtwooneTransfers'); if(el && transfers.length){ el.innerHTML=''; const n=document.createElement('div'); n.className='transfer-item'; n.textContent = `${best.name} a donné ${give} jeton${give>1?'s':''} à ${worst.name}`; el.appendChild(n); } }catch(e){}
+    // detect zero
+    try{ for(const p of players){ const pid=p.id; if((tokensBefore&&tokensBefore[pid]||0)>0 && (tokens[pid]||0)===0){ justReachedZero=pid; break; } } }catch(e){}
+    // check end
+    const playersWithTokens = players.filter(p=> (tokens[p.id]||0) > 0 ).length;
+    if(playersWithTokens <= 1 && gamePhase === 2 && (dechargeRounds || 0) >= 1){
+      status.textContent='Partie terminée';
+      rollBtn&&(rollBtn.disabled=true);
+      let winnerObj = players.find(p=> (tokens[p.id]||0) > 0);
+      if(!winnerObj){ const sorted = players.slice().sort((a,b)=> (tokens[b.id]||0) - (tokens[a.id]||0)); winnerObj = sorted[0]; }
+      try{ showWinnerBanner(winnerObj?winnerObj.name:'—'); }catch(e){}
     }
   }
 
@@ -445,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function(){
           status.textContent = '421 ! Bravo !';
           status.style.color = '#0b5fff';
         } else {
-          status.textContent = 'Résultat: ' + finalVals.join(' - ');
+          status.textContent = finalVals.join(' - ');
           status.style.color = '';
         }
       }
@@ -491,8 +502,8 @@ document.addEventListener('DOMContentLoaded', function(){
       const btn = document.getElementById('accept421Btn');
       if(btn) btn.disabled = !(rollCount > 0);
     }catch(e){}
-    // update roll count display
-    rollCountEl && (rollCountEl.textContent = `Lancer: ${rollCount}/${maxRolls}`);
+    // update remaining rolls display (show 3,2,1)
+    try{ if(remainingRollsEl) remainingRollsEl.textContent = String(Math.max(0, maxRolls - rollCount)); }catch(e){}
     // if max rolls reached, disable roll button
     if(rollCount >= maxRolls){ rollBtn && (rollBtn.disabled = true); }
     // if we've exhausted the allowed rolls, schedule an automatic validation after a short delay
@@ -509,8 +520,13 @@ document.addEventListener('DOMContentLoaded', function(){
     const pid = players[currentPlayerIndex].id;
     currentRoundResults[pid] = { dice: dice.slice(), eval: evaluateDice(dice.slice()) };
     // update status text
-    status.textContent = is421(dice) ? '421 !' : `Résultat: ${dice.join(' - ')}`;
-    // combo info will be rendered only when the turn is finalized
+    status.textContent = is421(dice) ? '421 !' : `${dice.join(' - ')}`;
+    // highlight the corresponding combo in the combos table on every roll
+    try{
+      const ev = evaluateDice(dice.slice());
+      const t = tokensForDice(dice.slice());
+      highlightCombo((ev && ev.label) ? ev.label : undefined, t, (ev && typeof ev.score !== 'undefined') ? ev.score : undefined);
+    }catch(e){}
   }
 
   if(rollBtn) rollBtn.addEventListener('click', doRoll);
@@ -531,10 +547,22 @@ document.addEventListener('DOMContentLoaded', function(){
     selected = [false,false,false];
     rollBtn.disabled = false;
     currentPlayerIndex = 0;
+    // clear any combo highlight in the combos table
+    try{
+      const combosEl = document.getElementById('fourtwooneCombos');
+      if(combosEl){
+        combosEl.querySelectorAll('.combo-cell.combo-active').forEach(n=>n.classList.remove('combo-active'));
+        combosEl.querySelectorAll('td.combo-active-td').forEach(n=>n.classList.remove('combo-active-td'));
+        combosEl.querySelectorAll('tr.combo-active').forEach(n=>n.classList.remove('combo-active'));
+      }
+    }catch(e){}
+    // clear transfers log
+    try{ const t = document.getElementById('fourtwooneTransfers'); if(t) t.innerHTML = ''; }catch(e){}
     // reset pot and tokens for new game start
     pot = 21;
     players.forEach(p=>{ tokens[p.id] = 0; figures[p.id] = ''; });
     gamePhase = 1;
+    justReachedZero = null;
     // clear history
     history._rounds = [];
     saveTokens(); savePot(); saveHistory();
@@ -542,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function(){
     updatePlayerUI();
     renderPlayerTokens();
     renderPhaseUI();
-    rollCountEl && (rollCountEl.textContent = `Lancer: ${rollCount}/${maxRolls}`);
+    try{ if(remainingRollsEl) remainingRollsEl.textContent = String(Math.max(0, maxRolls - rollCount)); }catch(e){}
     try{ const b = document.getElementById('accept421Btn'); if(b) b.disabled = true }catch(e){}
   }) }
 
@@ -564,15 +592,23 @@ document.addEventListener('DOMContentLoaded', function(){
     status.textContent = `Tour ${roundLabel} — gagnant: ${winner.name} (${winner.eval.label})`;
     // handle decharge end condition: count rounds in phase 2
     if(gamePhase === 2){
-      dechargeRounds = (dechargeRounds || 0) + 1;
+      if(justEnteredPhase2){
+        // the phase2 state was entered during the transfer resolution of the previous phase;
+        // do not count this current round as a decharge round — wait for the next round.
+        justEnteredPhase2 = false;
+        dechargeRounds = 0;
+      } else {
+        dechargeRounds = (dechargeRounds || 0) + 1;
+      }
     }
-    // if we are in decharge and at least one decharge round completed, a player with 0 jetons wins
+    // if we are in décharge and at least one décharge round completed, end the game
+    // as soon as any player has 0 tokens after this round
     if(gamePhase === 2 && dechargeRounds >= 1){
-      const zeroPlayer = players.find(p=> (tokens[p.id]||0) === 0 );
+      const zeroPlayer = players.find(p => (tokens[p.id]||0) === 0);
       if(zeroPlayer){
-        // end game: update players table and announce winner via modal
         renderPlayerTokens();
         try{ showWinnerBanner(zeroPlayer.name); }catch(e){}
+        justReachedZero = null;
         return; // stop further round initialization
       }
     }
@@ -595,8 +631,13 @@ document.addEventListener('DOMContentLoaded', function(){
     try{ figures[pid] = { label: (currentRoundResults[pid].eval && currentRoundResults[pid].eval.label) ? currentRoundResults[pid].eval.label : '', dice: currentRoundResults[pid].dice.slice() }; }catch(e){}
     // update players table immediately
     try{ renderPlayerTokens(); }catch(e){}
-    // render combo info for the finalized combination so the combos table cell stays highlighted
-    try{ renderComboInfo(currentRoundResults[pid].dice.slice()); }catch(e){}
+    // highlight the finalized combination in the combos table
+    try{
+      const vals = currentRoundResults[pid].dice.slice();
+      const ev = evaluateDice(vals);
+      const t = tokensForDice(vals);
+      highlightCombo((ev && ev.label) ? ev.label : undefined, t, (ev && typeof ev.score !== 'undefined') ? ev.score : undefined);
+    }catch(e){}
     checkRoundComplete();
     // advance to next player only if the round didn't complete
     if(Object.keys(currentRoundResults).length === 0){
@@ -607,13 +648,14 @@ document.addEventListener('DOMContentLoaded', function(){
     dice = ['','',''];
     renderDice(dice);
     updatePlayerUI();
-    rollCountEl && (rollCountEl.textContent = `Lancer: ${rollCount}/${maxRolls}`);
+    try{ if(remainingRollsEl) remainingRollsEl.textContent = String(Math.max(0, maxRolls - rollCount)); }catch(e){}
     status.textContent = '';
     try{ const b = document.getElementById('accept421Btn'); if(b) b.disabled = true }catch(e){}
   }
 
   function updatePlayerUI(){
-    if(currentPlayerEl) currentPlayerEl.textContent = `Joueur: ${players[currentPlayerIndex] && players[currentPlayerIndex].name ? players[currentPlayerIndex].name : '—'}`;
+    // current player label removed from UI — keep function as no-op to preserve call sites
+    return;
   }
 
   function renderHistory(clear){
@@ -643,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function(){
   renderCombosTable();
   renderPlayerTokens();
   updatePlayerUI();
-  rollCountEl && (rollCountEl.textContent = `Lancer: ${rollCount}/${maxRolls}`);
+  try{ if(remainingRollsEl) remainingRollsEl.textContent = String(Math.max(0, maxRolls - rollCount)); }catch(e){}
   renderHistory(true);
   renderPhaseUI();
 
