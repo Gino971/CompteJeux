@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compteur — standalone</title>
+<link rel="icon" href="data:,">
+<link rel="apple-touch-icon" href="data:,">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="topbar">
+    <button id="tabYamsBtn" class="btn">Yams</button>
+    <button id="startGameBtn" class="btn">Scrabble</button>
+    <button id="tabSimonBtn" class="btn">Simon</button>
+    <button id="tabMorpionBtn" class="btn">Morpion</button>
+    <button id="tab421Btn" class="btn" aria-label="Onglet 421">
+      <span class="mini-dice-topbar" aria-hidden="true">
+        <span class="mini-die" data-value="4">
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+        </span>
+        <span class="mini-die" data-value="2">
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+        </span>
+        <span class="mini-die" data-value="1">
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+        </span>
+      </span>
+    </button>
+    <button id="tabTimerBtn" class="btn">Minuteur</button>
+    <div class="spacer"></div>
+    <div id="topbarTimerReminder" class="topbar-timer-reminder" title="Ouvrir le minuteur">1:00</div>
+    <button id="tabListsBtn" class="btn">Joueurs</button>
+    <button id="endGameBtn" class="btn">Terminer</button>
+  </div>
+
+  <div id="boardWordcheck" aria-hidden="true">
+    <div class="wordcheck-container">
+      <input id="wordCheckInput" type="text" placeholder="Vérifier mot" aria-label="Vérifier mot" maxlength="15" size="17">
+      <button id="wordCheckBtn" class="btn">Vérifier</button>
+      <span id="wordCheckResult" class="small"></span>
+      <span id="odsStatus" class="small"></span>
+    </div>
+  </div>
+
+  <div class="container">
+    <section id="listsTab">
+      <div class="cols">
+        <div class="box">
+          <h3>Disponibles</h3>
+          <form id="addPlayerForm" onsubmit="return false;">
+            <input id="addPlayerInput" type="text" placeholder="Ajouter" autocomplete="off">
+            <button id="addPlayerBtn" type="submit" class="btn" title="Ajouter">✓</button>
+          </form>
+          <table id="generalTable"><tbody id="generalTbody"></tbody></table>
+        </div>
+        <div class="box">
+          <h3>En partie</h3>
+          <table id="gameTable"><tbody id="gameTbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="simonTab" class="hidden">
+      <div class="box">
+        <div class="simon-wrap">
+          <div id="simon-lives-wrap" class="simon-lives" aria-hidden="true"></div>
+          <div class="simon-board" role="application" aria-label="Simon game">
+            <button id="simon-btn-0" class="simon-pad simon-pad-0" data-index="0" aria-label="Pad 1"></button>
+            <button id="simon-btn-1" class="simon-pad simon-pad-1" data-index="1" aria-label="Pad 2"></button>
+            <button id="simon-btn-2" class="simon-pad simon-pad-2" data-index="2" aria-label="Pad 3"></button>
+            <button id="simon-btn-3" class="simon-pad simon-pad-3" data-index="3" aria-label="Pad 4"></button>
+          </div>
+          <div class="simon-controls">
+            <div class="simon-status">Niveau: <span id="simon-level">0</span></div>
+            <div class="simon-actions">
+              <button id="simon-start" class="btn">Start</button>
+              <button id="simon-reset" class="btn ghost">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="timerTab" class="hidden">
+      <div class="box timer-box-center">
+        <h3>Minuteur</h3>
+        <div class="timer-page">
+          <div class="timer-presets">
+            <button class="btn preset" data-seconds="7">7s</button>
+            <button class="btn preset" data-seconds="30">30s</button>
+            <button class="btn preset" data-seconds="60">60s</button>
+            <button class="btn preset" data-seconds="90">90s</button>
+            <button class="btn preset" data-seconds="120">120s</button>
+          </div>
+          <div id="bigTimerDisplay" class="timer-display-large">1:00</div>
+          <div class="timer-controls">
+            <input id="timerCustom" type="number" min="1" value="60" aria-label="Durée (s)">
+            <button id="timerStartBtnPage" class="btn">Démarrer</button>
+            <button id="timerStopBtnPage" class="btn">Arrêter</button>
+            <button id="timerResetBtnPage" class="btn ghost">Réinitialiser</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="boardTab" class="hidden">
+      <div class="box active-game">
+        <table id="activeGameTableBoard">
+          <thead id="boardThead"></thead>
+          <tbody id="activeGameTbodyBoard"></tbody>
+          <tfoot id="boardTfoot"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section id="yamsTab" class="hidden">
+      <div class="box">
+        <div class="yams-header">
+          <h3>Yams</h3>
+          <button id="yamsResetBtn" class="btn ghost btn-reset" aria-label="Remettre à zéro" title="Remettre à zéro">Reset</button>
+        </div>
+        <div class="yams-table-wrap">
+          <table id="yamsTable">
+            <thead></thead>
+            <tbody id="yamsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="morpionTab" class="hidden">
+      <div class="box morpion-box">
+        <h3>Morpion</h3>
+        <div class="morpion-game">
+          <div id="morpionBoard" class="morpion-grid" role="grid" aria-label="Morpion">
+            <!-- cases générées par JS -->
+          </div>
+          <div class="morpion-controls">
+            <button id="morpionRestart" class="btn">Nouvelle partie</button>
+            <button id="morpionToggleAI" class="btn ghost">Jouer vs IA</button>
+            <div id="morpionStatus" class="small" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="421Tab" class="hidden">
+      <div class="box fourtwoone-box">
+        <div class="fourtwoone-combos box fourtwoone-combos--top fourtwoone-combos--floating">
+          <h4>Combinaisons</h4>
+          <table id="fourtwooneCombos" class="small"></table>
+        </div>
+
+        <div class="fourtwoone-game">
+            <div class="fourtwoone-info">
+            <!-- removed small roll-number indicator -->
+            </div>
+          <div class="fourtwoone-layout">
+            <div class="fourtwoone-right-col">
+              <div class="fourtwoone-tokens box fourtwoone-tokens--panel">
+                <table id="fourtwoonePlayersTokens" class="small"></table>
+              </div>
+              <!-- transfers panel moved to bottom (outside main 421 box) -->
+            </div>
+          </div>
+          <div class="fourtwoone-dice-row">
+              <!-- combo info box removed per user request -->
+            <div id="fourTwoOneBoard" class="dice-grid" aria-live="polite" aria-label="Trois dés"> 
+              <!-- dés générés par JS -->
+            </div>
+          </div>
+          <div class="fourtwoone-controls">
+            <div id="remainingRolls" class="big-rolls">3</div>
+            <button id="roll421Btn" class="btn primary">Lancer</button>
+            <button id="accept421Btn" class="btn">Accepter</button>
+            <button id="end421TurnBtn" class="btn ghost">Terminer</button>
+            <button id="reset421Btn" class="btn ghost">Réinitialiser</button>
+          </div>
+          
+        </div>
+        <!-- pot and phase indicator placed below the 421 box -->
+        <div class="fourtwoone-pot-bottom">
+          <div id="fourtwoonePhaseLabel" class="fourtwoone-phase-label">Phase: 1</div>
+          <div id="fourtwoonePotDisplay" class="fourtwoone-pot">Pot: 0</div>
+        </div>
+      </div>
+      <!-- transfers panel moved outside the main box, displayed below it -->
+      <div class="fourtwoone-transfers-bottom">
+        <div class="fourtwoone-transfers box fourtwoone-transfers--panel">
+          <div id="fourtwooneTransfers" class="small fourtwoone-transfers-list" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- seeds embedded -->
+  <script id="seed-players" type="application/json">{"players":["Gino","Ingrid","Michèle","Jean-Jacques","Paulette"]}</script>
+  <script id="seed-board" type="application/json">{"rounds":[],"players":[]}</script>
+  <script id="seed-ods" type="text/plain">AA
+
+  </script>
+
+  <div id="endGameModal" class="modal hidden"><div class="modal-content">
+    <h4>Terminer la partie</h4>
+    <p>Voulez-vous sauvegarder la partie, reprendre, ou réinitialiser sans sauvegarder ?</p>
+    <div class="modal-actions">
+      <button id="modalSave" type="button" class="btn">Sauvegarder</button>
+      <button id="modalResume" type="button" class="btn">Reprendre</button>
+      <button id="modalReset" type="button" class="btn">Réinitialiser</button>
+    </div>
+  </div></div>
+
+  <div id="fourtwooneWinnerModal" class="modal hidden"><div class="modal-content">
+    <h4 id="fourtwooneWinnerTitle">Partie terminée</h4>
+    <p id="fourtwooneWinnerText">Le vainqueur est —</p>
+    <div class="modal-actions">
+      <button id="btnRejouer421" type="button" class="btn primary">Rejouer</button>
+      <button id="btnRetourPlayers421" type="button" class="btn">Retour joueurs</button>
+    </div>
+  </div></div>
+
+  <script src="script.js"></script>
+  <script src="simon.js"></script>
+  <script src="morpion.js"></script>
+  <script src="421.js"></script>
+  <script src="timer.js"></script>
+</body>
+</html>
