@@ -38,7 +38,18 @@
     <div class="spacer"></div>
     <div id="topbarTimerReminder" class="topbar-timer-reminder" title="Ouvrir le minuteur">1:00</div>
     <button id="tabListsBtn" class="btn">Joueurs</button>
-    <button id="endGameBtn" class="btn">Terminer</button>
+    <button id="globalResetBtn" class="btn btn-icon" title="Réinitialiser la page active" aria-label="Réinitialiser la page active">
+      <svg class="reset-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 3a7 7 0 1 1-6.32 4" stroke="#ffe600" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="3 3 7 3 7 7" stroke="#ffe600" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <button id="quitAppBtn" class="btn btn-icon" title="Quitter l'application" aria-label="Quitter l'application">
+      <svg class="quit-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="9" stroke="#ff3b3b" stroke-width="2" fill="none"/>
+        <path d="M7 7 L13 13 M13 7 L7 13" stroke="#ff3b3b" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
 
   <div id="boardWordcheck" aria-hidden="true">
@@ -47,6 +58,7 @@
       <button id="wordCheckBtn" class="btn">Vérifier</button>
       <span id="wordCheckResult" class="small"></span>
       <span id="odsStatus" class="small"></span>
+      <!-- bouton reset Scrabble supprimé, remplacé par globalResetBtn -->
     </div>
   </div>
 
@@ -82,7 +94,7 @@
             <div class="simon-status">Niveau: <span id="simon-level">0</span></div>
             <div class="simon-actions">
               <button id="simon-start" class="btn">Start</button>
-              <button id="simon-reset" class="btn ghost">Reset</button>
+              <!-- bouton reset Simon supprimé, remplacé par globalResetBtn -->
             </div>
           </div>
         </div>
@@ -125,7 +137,7 @@
       <div class="box">
         <div class="yams-header">
           <h3>Yams</h3>
-          <button id="yamsResetBtn" class="btn ghost btn-reset" aria-label="Remettre à zéro" title="Remettre à zéro">Reset</button>
+          <!-- bouton reset Yams supprimé, remplacé par globalResetBtn -->
         </div>
         <div class="yams-table-wrap">
           <table id="yamsTable">
@@ -182,7 +194,7 @@
             <button id="roll421Btn" class="btn primary">Lancer</button>
             <button id="accept421Btn" class="btn">Accepter</button>
             <button id="end421TurnBtn" class="btn ghost">Terminer</button>
-            <button id="reset421Btn" class="btn ghost">Réinitialiser</button>
+            <!-- bouton reset 421 supprimé, remplacé par globalResetBtn -->
           </div>
           
         </div>

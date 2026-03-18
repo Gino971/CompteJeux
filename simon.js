@@ -37,6 +37,7 @@
   function showListsTab(){ if(window && window.showTab) return window.showTab('lists'); document.getElementById('listsTab').classList.remove('hidden') }
 
   function resetGame(){ sequence = []; userPos = 0; playing = false; animating = false; lives = 3; updateLevel(); updateLivesDisplay(); try{ enableAllPads() }catch(e){} }
+  window.resetSimon = resetGame;
   function enableAllPads(){ try{ pads.forEach(p=>{ if(p){ p.disabled = false; p.classList && p.classList.remove && p.classList.remove('disabled') } }) }catch(e){} }
 
   function startGame(){ resetGame(); nextRound() }
