@@ -63,7 +63,13 @@
       const old = document.getElementById('simon-lose-banner'); if(old) old.remove();
       const b = document.createElement('div'); b.id = 'simon-lose-banner';
       b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>tu as eu ${points} points</p><div class="simon-lose-actions"><button id="simon-restart">Rejouer</button><button id="simon-back-to-players" class="btn ghost">Joueurs</button></div></div>`;
-      document.body.appendChild(b);
+      // placer le popup dans le wrap Simon si possible
+      var simonWrap = document.querySelector('.simon-wrap');
+      if (simonWrap) {
+        simonWrap.appendChild(b);
+      } else {
+        document.body.appendChild(b);
+      }
       // disable pads
       pads.forEach(p=>{ if(p) p.disabled = true; p && p.classList.add && p.classList.add('disabled') });
       animating = true;

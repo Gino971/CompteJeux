@@ -1,3 +1,43 @@
+/* Popup défaite Simon centré sur les pads */
+#simon-lose-banner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  background: rgba(15, 37, 80, 0.92);
+  pointer-events: auto;
+}
+#simon-lose-banner .simon-lose-inner {
+  background: #fff;
+  color: #0f2550;
+  border-radius: 18px;
+  padding: 32px 28px 24px;
+  box-shadow: 0 8px 40px rgba(2,6,23,0.18);
+  text-align: center;
+  min-width: 220px;
+  max-width: 90vw;
+}
+#simon-lose-banner h2 {
+  margin: 0 0 12px;
+  font-size: 2.1em;
+  letter-spacing: 2px;
+  color: #ef4444;
+}
+#simon-lose-banner p {
+  margin: 0 0 18px;
+  font-size: 1.15em;
+}
+#simon-lose-banner .simon-lose-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 10px;
+}
 /************************************************************
   0. BASE GLOBALE (commune à toutes les pages)
 ************************************************************/
@@ -1893,6 +1933,22 @@ input.board-score[type="number"]{
   padding:6px;
 }
 
+/* Vies (coeurs) verticales et agrandies */
+.simon-lives {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18px;
+  grid-area: lives;
+  margin-left: 12px;
+}
+.simon-lives svg, .simon-lives .simon-heart {
+  width: 38px !important;
+  height: 38px !important;
+  margin: 0;
+}
+
 .simon-board{
   grid-area: board;
   width: min(260px, 68vw);
@@ -1906,6 +1962,27 @@ input.board-score[type="number"]{
   margin:6px 0;
 }
 
+.simon-controls {
+  grid-area: actions;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  margin-top: 0;
+}
+.simon-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.simon-status {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 1.15em;
+}
+
 /* 8.2 Pads Simon */
 .simon-pad{
   border:0;
@@ -1916,6 +1993,22 @@ input.board-score[type="number"]{
   will-change:transform,filter,box-shadow;
   position:relative;
   overflow:hidden;
+}
+
+/* Pour que les pads et le bouton Start aient la même largeur */
+.simon-pad, #simon-start {
+  width: 100%;
+  min-width: 0;
+  max-width: unset;
+  font-size: 1.25em;
+  box-sizing: border-box;
+}
+#simon-start {
+  margin-top: 12px;
+  padding: 18px 0;
+  border-radius: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
 .simon-pad:active{
