@@ -62,7 +62,7 @@
       // remove existing
       const old = document.getElementById('simon-lose-banner'); if(old) old.remove();
       const b = document.createElement('div'); b.id = 'simon-lose-banner';
-      b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>tu as eu ${points} points</p><div class="simon-lose-actions"><button id="simon-restart">Rejouer</button><button id="simon-back-to-players" class="btn ghost">Joueurs</button></div></div>`;
+      b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>Ton score est de ${points} points</p><div class="simon-lose-actions"><button id="simon-restart">Rejouer</button><button id="simon-back-to-players" class="btn ghost">Joueurs</button></div></div>`;
       // placer le popup dans le wrap Simon si possible
       var simonWrap = document.querySelector('.simon-wrap');
       if (simonWrap) {
@@ -145,7 +145,23 @@
       }
       blinkAll();
       userPos = 0;
-      setTimeout(()=> playSequence(), 1000);
+      // Affiche un message temporaire d'erreur
+        // Supprimer tout message temporaire existant
+        const oldMsg = document.getElementById('simon-temp-message');
+        if (oldMsg) oldMsg.remove();
+        // Créer le message en copiant la structure du lose-banner
+        const msg = document.createElement('div');
+        msg.id = 'simon-temp-message';
+        msg.innerHTML = `<div class="simon-lose-inner"><h2>Aïe</h2><p>Regarde bien, on recommence</p></div>`;
+        // Insérer dans .simon-wrap si possible, sinon dans document.body
+        var simonWrap = document.querySelector('.simon-wrap');
+        if (simonWrap) {
+          simonWrap.appendChild(msg);
+        } else {
+          try{ document.body.appendChild(msg); }catch(e){ /* silent fallback */ }
+        }
+        // Supprimer après 1.5s puis rejouer la séquence
+        setTimeout(() => { try{ msg.remove(); }catch(e){}; try{ playSequence(); }catch(e){} }, 1500);
     }
   }
 

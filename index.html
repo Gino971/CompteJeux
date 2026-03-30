@@ -3,10 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Compteur — standalone</title>
+<title>jeux</title>
 <link rel="icon" href="data:,">
 <link rel="apple-touch-icon" href="data:,">
 <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
 </head>
 
 <body>
@@ -35,6 +38,7 @@
       </span>
     </button>
     <button id="tabTimerBtn" class="btn">Minuteur</button>
+    <button id="tabGiantCheckBtn" class="btn">Vérif géant</button>
     <div class="spacer"></div>
     <div id="topbarTimerReminder" class="topbar-timer-reminder" title="Ouvrir le minuteur">1:00</div>
     <button id="tabListsBtn" class="btn">Joueurs</button>
@@ -63,6 +67,17 @@
   </div>
 
   <div class="container">
+
+        <section id="giantCheckTab" class="hidden">
+          <div class="giant-wordcheck-box">
+            <div class="giant-wordcheck-container">
+              <input id="giantWordCheckInput" type="text" placeholder="Vérifier mot" aria-label="Vérifmot" maxlength="15" size="17">
+              <button id="giantWordCheckBtn" class="btn giant-btn">Vérifier</button>
+            </div>
+            <div id="giantWordCheckResult" class="giant-wordcheck-result"></div>
+            <div id="giantOdsStatus" class="giant-ods-status"></div>
+          </div>
+        </section>
     <section id="listsTab">
       <div class="cols">
         <div class="box">
@@ -91,13 +106,13 @@
             <button id="simon-btn-3" class="simon-pad simon-pad-3" data-index="3" aria-label="Pad 4"></button>
           </div>
           <div class="simon-controls">
-            <div class="simon-status">Niveau: <span id="simon-level">0</span></div>
-            <div class="simon-actions">
-              <button id="simon-start" class="btn">Start</button>
-              <!-- bouton reset Simon supprimé, remplacé par globalResetBtn -->
-            </div>
+              <div class="simon-actions">
+                <button id="simon-start" class="btn">Start</button>
+                <div class="simon-status">Niveau: <span id="simon-level">0</span></div>
+                <!-- bouton reset Simon supprimé, remplacé par globalResetBtn -->
+              </div>
           </div>
-        </div>
+          </div>
       </div>
     </section>
 

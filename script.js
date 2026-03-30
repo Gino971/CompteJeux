@@ -66,6 +66,10 @@ function normalizeWord(w){
 }
 
 function bind(){
+    // Onglet Vérif géant
+    const _tabGiantCheck = $('tabGiantCheckBtn');
+    if(_tabGiantCheck) _tabGiantCheck.addEventListener('click', ()=>showTab('giantCheck'));
+
   // Track next intended input target (mousedown/pointerdown happens before blur/change)
   document.addEventListener('pointerdown', function(e){
     try{
@@ -248,7 +252,7 @@ function bind(){
 function showTab(name){
   const bw = $('boardWordcheck')
   // hide all main tabs first
-  const ids = ['listsTab','boardTab','yamsTab','simonTab','timerTab','morpionTab','421Tab']
+  const ids = ['listsTab','boardTab','yamsTab','simonTab','timerTab','morpionTab','421Tab','giantCheckTab']
   ids.forEach(id => { const el = document.getElementById(id); if(!el) return; el.classList.add('hidden') })
   if(bw) { bw.classList.remove('active'); bw.setAttribute('aria-hidden','true') }
   // show requested tab
@@ -267,6 +271,33 @@ function showTab(name){
     const ht = $('421Tab'); if(ht) ht.classList.remove('hidden')
   } else if(name === 'timer') {
     const tt = $('timerTab'); if(tt) tt.classList.remove('hidden')
+  } else if(name === 'giantCheck') {
+    const gt = $('giantCheckTab'); if(gt) gt.classList.remove('hidden')
+  }
+  // Vérif géant : logique du vérificateur (copie adaptée du Scrabble)
+  const giantInput = $('giantWordCheckInput');
+  const giantBtn = $('giantWordCheckBtn');
+  const giantResult = $('giantWordCheckResult');
+  if(giantBtn && giantInput && giantResult){
+    const handleGiantCheck = ()=>{
+      const w = (giantInput.value||'').trim();
+      if(!w) { giantResult.textContent = 'Entrez un mot'; giantResult.className = 'giant-wordcheck-result unknown'; return; }
+      checkWord(w).then(r=>{
+        if(r && r.valid){
+          giantResult.textContent = `${w} est valide`;
+          giantResult.className = 'giant-wordcheck-result valid';
+        } else if(r && r.valid === false){
+          giantResult.textContent = `${w} n'est pas valide`;
+          giantResult.className = 'giant-wordcheck-result invalid';
+        } else {
+          giantResult.textContent = `Impossible de vérifier`;
+          giantResult.className = 'giant-wordcheck-result unknown';
+        }
+        try{ giantInput.value=''; giantInput.focus(); }catch(e){}
+      })
+    };
+    giantBtn.addEventListener('click', handleGiantCheck);
+    giantInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleGiantCheck() } });
   }
 }
 
