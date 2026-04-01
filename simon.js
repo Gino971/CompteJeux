@@ -62,7 +62,8 @@
       // remove existing
       const old = document.getElementById('simon-lose-banner'); if(old) old.remove();
       const b = document.createElement('div'); b.id = 'simon-lose-banner';
-      b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>Ton score est de ${points} points</p><div class="simon-lose-actions"><button id="simon-restart">Rejouer</button><button id="simon-back-to-players" class="btn ghost">Joueurs</button></div></div>`;
+      const scoreText = (points === 1) ? '1 point' : `${points} points`;
+      b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>Ton score est de ${scoreText}</p><div class="simon-lose-actions"><button id="simon-restart">Rejouer</button><button id="simon-back-to-players" class="btn ghost">Joueurs</button></div></div>`;
       // placer le popup dans le wrap Simon si possible
       var simonWrap = document.querySelector('.simon-wrap');
       if (simonWrap) {
