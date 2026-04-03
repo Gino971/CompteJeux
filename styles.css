@@ -89,12 +89,10 @@
 .giant-wordcheck-result {
   font-size: 2rem;
   font-weight: 900;
-  margin-top: 8px;
+  margin-top: 4px;
   min-height: 2rem;
   color: #fff;
-  text-align: left;
-  margin-left: calc(50% - 200px);
-  width: 400px;
+  text-align: center;
 }
 .giant-wordcheck-result.valid { color: #16a34a; }
 .giant-wordcheck-result.invalid { color: #dc2626; }
