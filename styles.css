@@ -58,22 +58,22 @@
   flex-direction: row;
   align-items: center;
   gap: 24px;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 /* Agrandissement supplémentaire pour les jeux de lettres */
 #giantWordCheckInput {
-  font-size: 2.5rem;
-  padding: 16px 24px;
+  font-size: 2rem;
+  padding: 12px 18px;
   border-radius: 16px;
-  width: 400px;
+  width: 300px;
   max-width: 98vw;
   box-shadow: 0 10px 40px rgba(2,6,23,0.18);
   border: 2px solid #ffe600;
   text-align: center;
 }
 .giant-btn {
-  font-size: 1.8rem;
-  padding: 16px 30px;
+  font-size: 1.4rem;
+  padding: 12px 20px;
   border-radius: 16px;
   background: #10b981;
   color: #fff;
@@ -89,10 +89,12 @@
 .giant-wordcheck-result {
   font-size: 2rem;
   font-weight: 900;
-  margin-top: 4px;
+  margin-top: 0px;
   min-height: 2rem;
   color: #fff;
-  text-align: center;
+  text-align: left;
+  margin-left: calc(50% - 150px);
+  width: 300px;
 }
 .giant-wordcheck-result.valid { color: #16a34a; }
 .giant-wordcheck-result.invalid { color: #dc2626; }
