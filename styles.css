@@ -52,6 +52,7 @@
   align-items: center;
   justify-content: center;
   min-height: 70vh;
+  padding-top: 20px;
 }
 .giant-wordcheck-container {
   display: flex;
@@ -93,8 +94,6 @@
   min-height: 2rem;
   color: #fff;
   text-align: left;
-  margin-left: calc(50% - 150px);
-  width: 300px;
 }
 .giant-wordcheck-result.valid { color: #16a34a; }
 .giant-wordcheck-result.invalid { color: #dc2626; }
