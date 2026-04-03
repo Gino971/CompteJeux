@@ -4,7 +4,7 @@ const LISTS_KEY = 'scorekeeper_lists_v1'
 const BOARD_KEY = 'scorekeeper_board_v1'
 const $ = id => document.getElementById(id)
 let state = { available: [], game: [], board: { rounds: [], players: [] }, timer: { duration: 60, remaining: 60, running: false } } // history supprimé
-// ODS wordlist set (loaded from ods8.txt if present)
+// ODS wordlist set (loaded from ODS9.txt if present)
 let odsSet = null
 let odsAvailable = false
 
@@ -26,7 +26,7 @@ async function loadODS(){
   odsSet = null
   odsAvailable = false
   try{
-    const r = await fetch('ods8.txt')
+    const r = await fetch('ODS9.txt')
     if(r && r.ok){
       const txt = await r.text()
       const lines = txt.split(/\r?\n/)
@@ -66,6 +66,10 @@ function normalizeWord(w){
 }
 
 function bind(){
+    // Onglet jeux de lettres
+    const _tabGiantCheck = $('tabGiantCheckBtn');
+    if(_tabGiantCheck) _tabGiantCheck.addEventListener('click', ()=>showTab('giantCheck'));
+
   // Track next intended input target (mousedown/pointerdown happens before blur/change)
   document.addEventListener('pointerdown', function(e){
     try{
@@ -143,7 +147,22 @@ function bind(){
   })()
   $('gameTbody').addEventListener('click', e=>{ const tr=e.target.closest('tr'); if(!tr) return; moveToAvailable(tr.dataset.id) })
   $('startGameBtn').addEventListener('click', ()=>startGame())
-  $('endGameBtn').addEventListener('click', ()=>endGame())
+  // Icône quitter l'app
+  const _quitAppBtn = $('quitAppBtn');
+  if(_quitAppBtn){
+    _quitAppBtn.addEventListener('click', ()=>{
+      try{ window.close(); }catch(e){}
+      try{
+        document.body.innerHTML = `
+          <div class="goodbye-screen">
+            <div class="goodbye-inner">
+              <h1>À bientôt</h1>
+              <p>Tu peux fermer cet onglet.</p>
+            </div>
+          </div>`
+      }catch(e){}
+    });
+  }
   const _nextRoundBtn = $('nextRoundBtn')
   if(_nextRoundBtn) _nextRoundBtn.addEventListener('click', ()=>nextRound())
   const _resetScoresBtn = $('resetScoresBtn')
@@ -157,6 +176,7 @@ function bind(){
   // word checker hooks
   const _wordCheckBtn = $('wordCheckBtn')
   const _wordCheckInput = $('wordCheckInput')
+  const _scrabbleResetBtn = $('scrabbleResetBtn')
   if(_wordCheckBtn){
     _wordCheckBtn.addEventListener('click', ()=>{
       const w = (_wordCheckInput && _wordCheckInput.value||'').trim();
@@ -169,18 +189,45 @@ function bind(){
     })
   }
   if(_wordCheckInput){ _wordCheckInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ _wordCheckBtn && _wordCheckBtn.click() } }) }
-  try{
-    $('modalSave').addEventListener('click', ()=>{ try{ doEndGameSave() }catch(e){ console.error('save error',e) } finally{ hideModal() } })
-    $('modalResume').addEventListener('click', ()=>{ hideModal() })
-    $('modalReset').addEventListener('click', ()=>{ try{ state.board={rounds:[],players:[]} ; persistBoard(); renderBoard(); showTab('lists') }catch(e){ console.error('reset error', e) } finally{ hideModal() } })
+  // Gestion du bouton global de réinitialisation
+  const _globalResetBtn = $('globalResetBtn');
+  if(_globalResetBtn){
+    _globalResetBtn.addEventListener('click', ()=>{
+      // Détecter l'onglet actif et appeler la fonction de reset correspondante
+      const tabs = [
+        {id: 'boardTab', fn: resetBoard},
+        {id: 'yamsTab', fn: function(){ window.yamsState = {}; renderYams(); }},
+        {id: '421Tab', fn: function(){ try{ if(window.reset421) window.reset421(); else if(window.resetFourTwoOne) window.resetFourTwoOne(); else { const btn = document.getElementById('reset421Btn'); if(btn) btn.click(); } }catch(e){} }},
+        {id: 'timerTab', fn: function(){ try{ if(window.stopTimer) window.stopTimer(); const s = Math.max(1, Number(document.getElementById('timerCustom')?.value)||60); const disp = document.getElementById('bigTimerDisplay'); if(disp) disp.textContent = (window.formatTime?s*1000:(''+s)); }catch(e){} }},
+        {id: 'simonTab', fn: function(){ try{ if(window.resetSimon) window.resetSimon(); }catch(e){} }},
+      ];
+      for(const t of tabs){
+        const el = document.getElementById(t.id);
+        if(el && !el.classList.contains('hidden')){ t.fn(); break; }
+      }
+    });
+  }
+  // Gestion robuste des boutons du modal "Terminer"
+  const modalSave = $('modalSave');
+  const modalResume = $('modalResume');
+  const modalReset = $('modalReset');
+  if (!modalSave || !modalResume || !modalReset) {
+    console.error('[bind] Boutons du modal Terminer manquants:', {modalSave, modalResume, modalReset});
+  } else {
+    modalSave.addEventListener('click', ()=>{ try{ doEndGameSave() }catch(e){ console.error('save error',e) } finally{ hideModal() } });
+    modalResume.addEventListener('click', ()=>{ hideModal() });
+    modalReset.addEventListener('click', ()=>{ try{ state.board={rounds:[],players:[]} ; persistBoard(); renderBoard(); /* showTab('lists') */ }catch(e){ console.error('reset error', e) } finally{ hideModal() } });
     // quit button: try to close window, fallback to goodbye screen
-    const modalQuit = document.createElement('button')
-    modalQuit.id = 'modalQuit'
-    modalQuit.type = 'button'
-    modalQuit.className = 'btn ghost'
-    modalQuit.textContent = 'Quitter'
-    const parent = $('modalSave').parentNode
-    parent.appendChild(modalQuit)
+    let modalQuit = document.getElementById('modalQuit');
+    if (!modalQuit) {
+      modalQuit = document.createElement('button');
+      modalQuit.id = 'modalQuit';
+      modalQuit.type = 'button';
+      modalQuit.className = 'btn ghost';
+      modalQuit.textContent = 'Quitter';
+      const parent = modalSave.parentNode;
+      if (parent) parent.appendChild(modalQuit);
+    }
     modalQuit.addEventListener('click', ()=>{
       try{ window.close(); }catch(e){ /* fallback */ }
       try{
@@ -192,8 +239,8 @@ function bind(){
             </div>
           </div>`
       }catch(e){}
-    })
-  }catch(e){ console.warn('modal hooks attach failed', e) }
+    });
+  }
   // allow clicking backdrop to close modal and Esc to dismiss
   const _modal = $('endGameModal')
   if(_modal){
@@ -205,7 +252,7 @@ function bind(){
 function showTab(name){
   const bw = $('boardWordcheck')
   // hide all main tabs first
-  const ids = ['listsTab','boardTab','yamsTab','simonTab','timerTab','morpionTab','421Tab']
+  const ids = ['listsTab','boardTab','yamsTab','simonTab','timerTab','morpionTab','421Tab','giantCheckTab']
   ids.forEach(id => { const el = document.getElementById(id); if(!el) return; el.classList.add('hidden') })
   if(bw) { bw.classList.remove('active'); bw.setAttribute('aria-hidden','true') }
   // show requested tab
@@ -224,6 +271,33 @@ function showTab(name){
     const ht = $('421Tab'); if(ht) ht.classList.remove('hidden')
   } else if(name === 'timer') {
     const tt = $('timerTab'); if(tt) tt.classList.remove('hidden')
+  } else if(name === 'giantCheck') {
+    const gt = $('giantCheckTab'); if(gt) gt.classList.remove('hidden')
+  }
+  // Jeux de lettres : logique du vérificateur (copie adaptée du Scrabble)
+  const giantInput = $('giantWordCheckInput');
+  const giantBtn = $('giantWordCheckBtn');
+  const giantResult = $('giantWordCheckResult');
+  if(giantBtn && giantInput && giantResult){
+    const handleGiantCheck = ()=>{
+      const w = (giantInput.value||'').trim();
+      if(!w) { giantResult.textContent = 'Entrez un mot'; giantResult.className = 'giant-wordcheck-result unknown'; return; }
+      checkWord(w).then(r=>{
+        if(r && r.valid){
+          giantResult.textContent = `${w} est valide`;
+          giantResult.className = 'giant-wordcheck-result valid';
+        } else if(r && r.valid === false){
+          giantResult.textContent = `${w} n'est pas valide`;
+          giantResult.className = 'giant-wordcheck-result invalid';
+        } else {
+          giantResult.textContent = `Impossible de vérifier`;
+          giantResult.className = 'giant-wordcheck-result unknown';
+        }
+        try{ giantInput.value=''; giantInput.focus(); }catch(e){}
+      })
+    };
+    giantBtn.addEventListener('click', handleGiantCheck);
+    giantInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleGiantCheck() } });
   }
 }
 
@@ -267,54 +341,114 @@ function renderGame(){ $('gameTbody').innerHTML = state.game.map(p=>`<tr data-id
 function startGame(){ if(state.game.length===0) return alert('Sélectionner des joueurs'); state.board={ rounds:[{id:1,scores:{}}], players: state.game.map(p=>({id:p.id,name:p.name})) }; persistBoard(); renderBoard(); showTab('board') }
 
 function renderBoard(){
-  const table = $('activeGameTableBoard')
-  const thead = $('boardThead')
-  const tbody = $('activeGameTbodyBoard')
-  const tfoot = $('boardTfoot')
+  // On cible le conteneur scrollable, pas directement le tableau
+  let scrollDiv = document.querySelector('.scrabble-table-scroll');
+  if(!scrollDiv) {
+    // Création si absent
+    const box = document.querySelector('#boardTab .box.active-game');
+    if(!box) return;
+    scrollDiv = document.createElement('div');
+    scrollDiv.className = 'scrabble-table-scroll';
+    box.appendChild(scrollDiv);
+  }
+  // Nettoyage du contenu
+  scrollDiv.innerHTML = '';
+  // Création du tableau
+  const table = document.createElement('table');
+  table.id = 'activeGameTableBoard';
+  scrollDiv.appendChild(table);
 
-  // header (player names) — ensure it's the first row in the table
-  const colWidth = 56; // pixel width for score columns
-  const head = ['<tr><th>Manche</th>']
-  state.board.players.forEach(p => head.push(`<th class="player-col" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</th>`))
-  head.push('</tr>')
-  if(thead) thead.innerHTML = head.join('')
-  if(table && thead && thead.parentNode !== table) table.insertBefore(thead, table.firstChild)
+  const players = (state.board && state.board.players) || [];
+  const rounds = (state.board && state.board.rounds) || [];
 
-  // body (rounds + inputs)
-  let html = ''
-  state.board.rounds.forEach((rnd, ridx) => {
-    html += `<tr data-round="${ridx}"><td>M${ridx+1}</td>`
-    state.board.players.forEach(p => {
-      const v = (rnd.scores && (p.id in rnd.scores)) ? rnd.scores[p.id] : ''
-      html += `<td><input type="text" class="board-score" data-player="${p.id}" data-round="${ridx}" value="${v}"/></td>`
-    })
-    html += '</tr>'
-    const sub = state.board.players.map(p => {
-      const cum = state.board.rounds.slice(0, ridx+1).reduce((s, rr) => s + Number((rr.scores && rr.scores[p.id])||0), 0)
-      return `<td class="subtotal-cell">${cum}</td>`
-    })
-    html += `<tr class="subtotal-row"><td>Sous-total M${ridx+1}</td>${sub.join('')}</tr>`
-  })
-  if(tbody) tbody.innerHTML = html
+  // Largeurs synchronisées avec le JS (responsive)
+  let colWidth = 200;
+  if(window.matchMedia && window.matchMedia('(max-width:520px)').matches) {
+    colWidth = 100;
+  }
+  const colWidths = [colWidth].concat(players.map(()=>colWidth));
+  const colgroupHtml = `<colgroup>${colWidths.map(w=>`<col style=\"width:${w}px;min-width:48px;max-width:${colWidth}px;\">`).join('')}</colgroup>`;
 
-  // footer totals — ensure it's the last element in the table
-  const totals = ['<tr><td>Total</td>']
-  state.board.players.forEach(p => {
-    const tot = state.board.rounds.reduce((s, r) => s + Number((r.scores && r.scores[p.id])||0), 0)
-    totals.push(`<td class="player-total">${tot}</td>`)
-  })
-  totals.push('</tr>')
-  if(tfoot) tfoot.innerHTML = totals.join('')
-  if(table && tfoot && tfoot.parentNode !== table) table.appendChild(tfoot)
+  // Build thead + tbody + tfoot from scratch
+  const theadHtml = `<thead id="boardThead"><tr><th>Manche</th>${players.map(p=>`<th class="player-col" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</th>`).join('')}</tr></thead>`;
 
-  // attach handlers
-  if(tbody) tbody.querySelectorAll('.board-score').forEach(inp => { inp.addEventListener('keydown', onBoardEnter) })
-  if(tbody) tbody.querySelectorAll('.board-score').forEach(inp => { inp.addEventListener('blur', onBoardBlur) })
+  let tbodyHtml = `<tbody id="activeGameTbodyBoard">`;
+  rounds.forEach((rnd, ridx)=>{
+    tbodyHtml += `<tr data-round="${ridx}"><td>M${ridx+1}</td>${players.map(p=>{ const v = (rnd.scores && (p.id in rnd.scores))? rnd.scores[p.id] : ''; return `<td><input type="number" class="board-score" data-player="${p.id}" data-round="${ridx}" value="${v}" inputmode="numeric" pattern="[0-9]*"></td>` }).join('')}</tr>`;
+    const sub = players.map(p=>{ const cum = rounds.slice(0, ridx+1).reduce((s, rr)=> s + Number((rr.scores && rr.scores[p.id])||0), 0); return `<td class="subtotal-cell">${cum}</td>` });
+    tbodyHtml += `<tr class="subtotal-row"><td>Sous-total M${ridx+1}</td>${sub.join('')}</tr>`;
+  });
+  tbodyHtml += `</tbody>`;
+
+  const tfootHtml = `<tfoot id="boardTfoot"><tr><td>Total</td>${players.map(p=>{ const tot = rounds.reduce((s,r)=> s + Number((r.scores && r.scores[p.id])||0), 0); return `<td class="player-total">${tot}</td>` }).join('')}</tr></tfoot>`;
+
+  table.innerHTML = colgroupHtml + theadHtml + tbodyHtml + tfootHtml;
+
+  // attach handlers to inputs
+  table.querySelectorAll('.board-score').forEach(inp=>{ inp.addEventListener('keydown', onBoardEnter); inp.addEventListener('blur', onBoardBlur) })
 }
 
-function onBoardEnter(e){ if(e.key!=='Enter') return; e.preventDefault(); const pid = e.target.dataset.player; const ridx = Number(e.target.dataset.round); const raw = e.target.value.trim(); const val = raw===''?0:Number(raw); if(!state.board.rounds[ridx].scores) state.board.rounds[ridx].scores = {}; state.board.rounds[ridx].scores[pid]=val; persistBoard(); const players = state.board.players; const playerIdx = players.findIndex(p=>p.id===pid); const isLastPlayerInRound = playerIdx === players.length -1; const isLastRound = ridx === state.board.rounds.length -1; if(isLastPlayerInRound && isLastRound){ state.board.rounds.push({id:state.board.rounds.length+1,scores:{}}); persistBoard(); renderBoard(); const firstPlayerId = players.length?players[0].id:null; if(firstPlayerId){ const newInput = document.querySelector(`.board-score[data-round="${state.board.rounds.length-1}"][data-player="${firstPlayerId}"]`); if(newInput) newInput.focus() } } else { const nextRoundIdx = isLastPlayerInRound? (ridx+1) : ridx; const nextPlayerId = isLastPlayerInRound? players[0].id : players[playerIdx+1].id; renderBoard(); setTimeout(()=>{ const nextInput = document.querySelector(`.board-score[data-round="${nextRoundIdx}"][data-player="${nextPlayerId}"]`); if(nextInput) nextInput.focus() },0) } }
+function onBoardEnter(e){
+  if(e.key!=='Enter') return;
+  e.preventDefault();
+  const pid = e.target.dataset.player;
+  const ridx = Number(e.target.dataset.round);
+  const raw = e.target.value.trim();
+  if(raw!=='' && !/^\d+$/.test(raw)){
+    alert('Veuillez saisir un nombre entier.');
+    e.target.value = '';
+    e.target.focus();
+    return;
+  }
+  const val = raw===''?0:Number(raw);
+  if(!state.board.rounds[ridx].scores) state.board.rounds[ridx].scores = {};
+  state.board.rounds[ridx].scores[pid]=val;
+  persistBoard();
+  const players = state.board.players;
+  const playerIdx = players.findIndex(p=>p.id===pid);
+  const isLastPlayerInRound = playerIdx === players.length -1;
+  const isLastRound = ridx === state.board.rounds.length -1;
+  if(isLastPlayerInRound && isLastRound){
+    state.board.rounds.push({id:state.board.rounds.length+1,scores:{}});
+    persistBoard();
+    renderBoard();
+    const firstPlayerId = players.length?players[0].id:null;
+    if(firstPlayerId){
+      const newInput = document.querySelector(`.board-score[data-round="${state.board.rounds.length-1}"][data-player="${firstPlayerId}"]`);
+      if(newInput) newInput.focus()
+    }
+  } else {
+    const nextRoundIdx = isLastPlayerInRound? (ridx+1) : ridx;
+    const nextPlayerId = isLastPlayerInRound? players[0].id : players[playerIdx+1].id;
+    renderBoard();
+    setTimeout(()=>{
+      const nextInput = document.querySelector(`.board-score[data-round="${nextRoundIdx}"][data-player="${nextPlayerId}"]`);
+      if(nextInput) nextInput.focus()
+    },0)
+  }
+}
 
-function onBoardBlur(e){ try{ const pid = e.target.dataset.player; const ridx = Number(e.target.dataset.round); const raw = (e.target.value||'').trim(); const val = raw===''?0:Number(raw); if(Number.isNaN(val)){ alert('Score invalide'); e.target.focus(); return } if(!state.board.rounds[ridx].scores) state.board.rounds[ridx].scores = {}; state.board.rounds[ridx].scores[pid]=val; persistBoard(); // Defer re-render so a click that caused this blur can reach its target
+function onBoardBlur(e){
+  try{
+    const pid = e.target.dataset.player;
+    const ridx = Number(e.target.dataset.round);
+    const raw = (e.target.value||'').trim();
+    if(raw!=='' && !/^\d+$/.test(raw)){
+      alert('Veuillez saisir un nombre entier.');
+      e.target.value = '';
+      e.target.focus();
+      return;
+    }
+    const val = raw===''?0:Number(raw);
+    if(Number.isNaN(val)){
+      alert('Score invalide');
+      e.target.focus();
+      return;
+    }
+    if(!state.board.rounds[ridx].scores) state.board.rounds[ridx].scores = {};
+    state.board.rounds[ridx].scores[pid]=val;
+    persistBoard();
+    // Defer re-render so a click that caused this blur can reach its target
     try{
       const players = state.board.players || [];
       const playerIdx = players.findIndex(p=>p.id===pid);
@@ -345,14 +479,19 @@ function updateBoardTotals(){
       })
     })
 
-    // Update footer totals
+    // Met à jour uniquement le contenu des cellules .player-total du tfoot existant
     const tfoot = document.getElementById('boardTfoot');
-    if(tfoot){
+    if(tfoot) {
       const totalCells = tfoot.querySelectorAll('.player-total');
-      players.forEach((p, pi)=>{
+      // Si le nombre de cellules ne correspond pas au nombre de joueurs, on force un renderBoard
+      if (totalCells.length !== players.length) {
+        if (typeof renderBoard === 'function') renderBoard();
+        return;
+      }
+      players.forEach((p, pi) => {
         const tot = state.board.rounds.reduce((s, r) => s + Number((r.scores && r.scores[p.id])||0), 0);
         if(totalCells[pi]) totalCells[pi].textContent = tot;
-      })
+      });
     }
   }catch(e){ console.error('updateBoardTotals error', e) }
 }
@@ -363,7 +502,17 @@ function nextRound(){ state.board.rounds.push({id:state.board.rounds.length+1,sc
 function endGame(){ showModal() }
 function doEndGameSave(){ state.board = { rounds: [], players: [] }; persistBoard(); renderBoard(); showTab('lists') } // historique supprimé
 
-function resetBoard(){ if(!confirm('Réinitialiser le tableau ?')) return; state.board = { rounds: [], players: [] }; persistBoard(); renderBoard(); showTab('lists') }
+function resetBoard(){
+  // Conserve les joueurs, mais remet une seule manche vide pour la saisie
+  const players = (state.board && state.board.players) ? state.board.players.slice() : [];
+  state.board = {
+    rounds: [{id: 1, scores: {}}],
+    players: players
+  };
+  persistBoard();
+  renderBoard();
+  // On ne change plus d'onglet, on reste sur Scrabble
+}
 
 // persistence via localStorage only
 function persistLists(){ try{ localStorage.setItem(LISTS_KEY, JSON.stringify({available:state.available,game:state.game})) }catch(e){} }
@@ -417,14 +566,7 @@ function renderYams() {
     thead += '<th>' + escapeHtml(p.name) + '</th>';
   });
   thead += '</tr>';
-  // Build/replace a <colgroup> to enforce fixed pixel widths per column
-  try{
-    const existingColgroup = table.querySelector('colgroup');
-    const cg = document.createElement('colgroup');
-    const firstCol = document.createElement('col'); firstCol.style.width = '140px'; firstCol.style.minWidth = '140px'; firstCol.style.maxWidth = '140px'; cg.appendChild(firstCol);
-    players.forEach(function(){ const c = document.createElement('col'); c.style.width = '80px'; c.style.minWidth = '80px'; c.style.maxWidth = '80px'; cg.appendChild(c); });
-    if(existingColgroup && existingColgroup.parentNode){ existingColgroup.parentNode.replaceChild(cg, existingColgroup); } else { table.insertBefore(cg, table.firstChild); }
-  }catch(e){ /* ignore colgroup errors */ }
+  /* removed automatic <colgroup> generation to avoid forcing column widths */
   var theadElem = table.querySelector('thead');
   if(!theadElem){
     theadElem = document.createElement('thead');
@@ -500,7 +642,7 @@ function renderYams() {
       } else {
         var val = (window.yamsState[p.id] && typeof window.yamsState[p.id][safeKey(fig.key)] !== 'undefined') ? window.yamsState[p.id][safeKey(fig.key)] : '';
           rows += '<td class="yams-cell-center">';
-          rows += '<input type="text" inputmode="numeric" pattern="[0-9]*" class="yams-input" data-player="' + p.id + '" data-fig="' + safeKey(fig.key) + '" value="' + val + '"> ';
+          rows += '<input type="number" step="1" inputmode="numeric" pattern="[0-9]*" class="yams-input" data-player="' + p.id + '" data-fig="' + safeKey(fig.key) + '" value="' + val + '"> ';
         var existingValNum = (window.yamsState[p.id] && typeof window.yamsState[p.id][safeKey(fig.key)] !== 'undefined') ? window.yamsState[p.id][safeKey(fig.key)] : '';
         var disabledClassNum = (typeof existingValNum !== 'undefined' && existingValNum !== false && existingValNum !== '') ? ' disabled-look' : '';
           rows += '<button class="yams-barre-btn' + disabledClassNum + '" aria-disabled="' + (disabledClassNum ? 'true' : 'false') + '" data-player="' + p.id + '" data-fig="' + barreKey + '" title="Barrer">✖</button>';

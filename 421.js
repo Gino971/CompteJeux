@@ -538,7 +538,7 @@ document.addEventListener('DOMContentLoaded', function(){
   // hide Terminer button: validation must go through Accepter
   try{ if(endTurnBtn) endTurnBtn.style.display = 'none'; }catch(e){}
 
-  if(resetBtn){ resetBtn.addEventListener('click', function(){
+  function reset421(){
     // reset UI and state
     board.innerHTML='';
     status.textContent='';
@@ -572,7 +572,9 @@ document.addEventListener('DOMContentLoaded', function(){
     renderPhaseUI();
     try{ if(remainingRollsEl) remainingRollsEl.textContent = String(Math.max(0, maxRolls - rollCount)); }catch(e){}
     try{ const b = document.getElementById('accept421Btn'); if(b) b.disabled = true }catch(e){}
-  }) }
+  }
+  window.reset421 = reset421;
+  if(resetBtn){ resetBtn.addEventListener('click', reset421) }
 
   function checkRoundComplete(){
     const all = players.every(p => currentRoundResults[p.id]);

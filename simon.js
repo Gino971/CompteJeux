@@ -37,6 +37,7 @@
   function showListsTab(){ if(window && window.showTab) return window.showTab('lists'); document.getElementById('listsTab').classList.remove('hidden') }
 
   function resetGame(){ sequence = []; userPos = 0; playing = false; animating = false; lives = 3; updateLevel(); updateLivesDisplay(); try{ enableAllPads() }catch(e){} }
+  window.resetSimon = resetGame;
   function enableAllPads(){ try{ pads.forEach(p=>{ if(p){ p.disabled = false; p.classList && p.classList.remove && p.classList.remove('disabled') } }) }catch(e){} }
 
   function startGame(){ resetGame(); nextRound() }
@@ -61,8 +62,15 @@
       // remove existing
       const old = document.getElementById('simon-lose-banner'); if(old) old.remove();
       const b = document.createElement('div'); b.id = 'simon-lose-banner';
-      b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>tu as eu ${points} points</p><div class="simon-lose-actions"><button id="simon-restart">Rejouer</button><button id="simon-back-to-players" class="btn ghost">Joueurs</button></div></div>`;
-      document.body.appendChild(b);
+      const scoreText = (points === 1) ? '1 point' : `${points} points`;
+      b.innerHTML = `<div class="simon-lose-inner"><h2>PERDU</h2><p>Ton score est de ${scoreText}</p><div class="simon-lose-actions"><button id="simon-restart">Rejouer</button><button id="simon-back-to-players" class="btn ghost">Joueurs</button></div></div>`;
+      // placer le popup dans le wrap Simon si possible
+      var simonWrap = document.querySelector('.simon-wrap');
+      if (simonWrap) {
+        simonWrap.appendChild(b);
+      } else {
+        document.body.appendChild(b);
+      }
       // disable pads
       pads.forEach(p=>{ if(p) p.disabled = true; p && p.classList.add && p.classList.add('disabled') });
       animating = true;
@@ -138,7 +146,23 @@
       }
       blinkAll();
       userPos = 0;
-      setTimeout(()=> playSequence(), 1000);
+      // Affiche un message temporaire d'erreur
+        // Supprimer tout message temporaire existant
+        const oldMsg = document.getElementById('simon-temp-message');
+        if (oldMsg) oldMsg.remove();
+        // Créer le message en copiant la structure du lose-banner
+        const msg = document.createElement('div');
+        msg.id = 'simon-temp-message';
+        msg.innerHTML = `<div class="simon-lose-inner"><h2>Aïe</h2><p>Regarde bien, on recommence</p></div>`;
+        // Insérer dans .simon-wrap si possible, sinon dans document.body
+        var simonWrap = document.querySelector('.simon-wrap');
+        if (simonWrap) {
+          simonWrap.appendChild(msg);
+        } else {
+          try{ document.body.appendChild(msg); }catch(e){ /* silent fallback */ }
+        }
+        // Supprimer après 1.5s puis rejouer la séquence
+        setTimeout(() => { try{ msg.remove(); }catch(e){}; try{ playSequence(); }catch(e){} }, 1500);
     }
   }
 

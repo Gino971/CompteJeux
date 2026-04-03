@@ -138,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setTimeout(()=>{ try{ aiTurn() }catch(e){} }, 350);
     }
   }
+  window.resetMorpion = startNew;
 
   restartBtn.addEventListener('click', startNew);
   if(toggleAIBtn){
