@@ -328,10 +328,7 @@ function showTab(name){
       if(filtered.length === 0){
         resultsDiv.innerHTML = '<p>Aucun mot trouvé</p>';
       } else {
-        resultsDiv.innerHTML = '<ul>' + filtered.slice(0, 100).map(word => `<li>${word}</li>`).join('') + '</ul>';
-        if(filtered.length > 100){
-          resultsDiv.innerHTML += `<p>... et ${filtered.length - 100} autres mots</p>`;
-        }
+        resultsDiv.innerHTML = '<ul>' + filtered.map(word => `<li>${word}</li>`).join('') + '</ul>';
       }
     };
     searchBtn.addEventListener('click', handleSearch);

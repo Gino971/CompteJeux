@@ -114,12 +114,14 @@
 }
 .search-options {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
-.search-options label {
+.search-options span {
   font-size: 1.4rem;
   color: #fff;
   font-weight: bold;
@@ -132,6 +134,7 @@
   background: #1f2937;
   color: #fff;
   text-align: center;
+  width: 80px;
 }
 .search-options input::placeholder {
   color: #9ca3af;
@@ -151,7 +154,7 @@
   background: #2563eb;
 }
 .search-results {
-  max-height: 400px;
+  max-height: 600px;
   overflow-y: auto;
   background: #1f2937;
   border-radius: 8px;
