@@ -309,26 +309,84 @@ function showTab(name){
 
   // Logique de recherche de mots
   const lengthInput = $('wordLengthInput');
-  const requiredInput = $('requiredLettersInput');
+  const generateBtn = $('generateLetterBoxes');
+  const letterBoxesContainer = $('letterBoxesContainer');
+  const searchModeRow = $('searchModeRow');
   const searchBtn = $('searchWordsBtn');
   const resultsDiv = $('searchResults');
-  if(searchBtn && lengthInput && requiredInput && resultsDiv){
+
+  if(generateBtn && lengthInput && letterBoxesContainer && searchModeRow){
+    const generateBoxes = ()=>{
+      const len = parseInt(lengthInput.value) || 0;
+      letterBoxesContainer.innerHTML = '';
+      resultsDiv.innerHTML = '';
+      if(len < 2 || len > 15){ searchModeRow.style.display = 'none'; return; }
+      for(let i = 0; i < len; i++){
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.maxLength = 1;
+        inp.className = 'letter-box';
+        inp.setAttribute('data-pos', i);
+        inp.addEventListener('input', function(){
+          this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '');
+          if(this.value) this.classList.add('filled');
+          else this.classList.remove('filled');
+          if(this.value && i < len - 1){
+            const next = letterBoxesContainer.querySelectorAll('.letter-box')[i + 1];
+            if(next) next.focus();
+          }
+        });
+        inp.addEventListener('keydown', function(e){
+          if(e.key === 'Backspace' && !this.value && i > 0){
+            const prev = letterBoxesContainer.querySelectorAll('.letter-box')[i - 1];
+            if(prev){ prev.focus(); prev.value = ''; prev.classList.remove('filled'); }
+          }
+          if(e.key === 'Enter'){ handleSearch(); }
+        });
+        letterBoxesContainer.appendChild(inp);
+      }
+      searchModeRow.style.display = 'flex';
+      letterBoxesContainer.querySelectorAll('.letter-box')[0].focus();
+    };
+    generateBtn.addEventListener('click', generateBoxes);
+    lengthInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') generateBoxes(); });
+  }
+
+  if(searchBtn && resultsDiv && letterBoxesContainer){
     const handleSearch = ()=>{
-      const length = parseInt(lengthInput.value) || 0;
-      const required = (requiredInput.value || '').toLowerCase().replace(/[^a-z]/g, '');
+      const boxes = letterBoxesContainer.querySelectorAll('.letter-box');
+      const len = boxes.length;
+      if(!len){ resultsDiv.innerHTML = '<p>Choisissez un nombre de lettres</p>'; return; }
       if(!odsAvailable || !wordsList.length){
         resultsDiv.innerHTML = '<p>Liste de mots non disponible</p>';
         return;
       }
-      let filtered = wordsList.filter(word => {
-        if(length > 0 && word.length !== length) return false;
-        if(required){
-          for(const letter of required){
-            if(!word.toLowerCase().includes(letter)) return false;
+      const mode = (document.querySelector('input[name="searchMode"]:checked') || {}).value || 'exact';
+      const pattern = [];
+      for(let i = 0; i < len; i++){
+        pattern.push((boxes[i].value || '').toUpperCase());
+      }
+      let filtered;
+      if(mode === 'exact'){
+        filtered = wordsList.filter(word => {
+          if(word.length !== len) return false;
+          const upper = word.toUpperCase();
+          for(let i = 0; i < len; i++){
+            if(pattern[i] && upper[i] !== pattern[i]) return false;
           }
-        }
-        return true;
-      });
+          return true;
+        });
+      } else {
+        const requiredLetters = pattern.filter(l => l);
+        filtered = wordsList.filter(word => {
+          if(word.length !== len) return false;
+          const upper = word.toUpperCase();
+          for(const letter of requiredLetters){
+            if(!upper.includes(letter)) return false;
+          }
+          return true;
+        });
+      }
       if(filtered.length === 0){
         resultsDiv.innerHTML = '<p>Aucun mot trouvé</p>';
       } else {
@@ -336,8 +394,7 @@ function showTab(name){
       }
     };
     searchBtn.addEventListener('click', handleSearch);
-    lengthInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleSearch() } });
-    requiredInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleSearch() } });
+  }
   }
 }
 
