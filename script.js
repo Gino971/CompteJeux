@@ -69,6 +69,18 @@ function normalizeWord(w){
 }
 
 function bind(){
+      // Bouton reset du nombre de lettres (doit être dans bind pour exister au bon moment)
+      setTimeout(()=>{
+        const resetWordLengthBtn = document.getElementById('resetWordLengthBtn');
+        const lengthInput = document.getElementById('wordLengthInput');
+        if(resetWordLengthBtn && lengthInput){
+          resetWordLengthBtn.addEventListener('click', ()=>{
+            lengthInput.value = '';
+            lengthInput.dispatchEvent(new Event('input'));
+            lengthInput.focus();
+          });
+        }
+      }, 200);
     // Onglet jeux de lettres
     const _tabGiantCheck = $('tabGiantCheckBtn');
     if(_tabGiantCheck) _tabGiantCheck.addEventListener('click', ()=>showTab('giantCheck'));
@@ -260,6 +272,9 @@ function bind(){
     giantInput.addEventListener('input', ()=>{ lastGiantValue = giantInput.value; });
     giantInput.addEventListener('compositionend', ()=>{ lastGiantValue = giantInput.value; });
     giantBtn.addEventListener('pointerdown', (e)=>{ lastGiantValue = giantInput.value; });
+    function sortedLetters(str) {
+      return str.normalize('NFD').replace(/[^A-Za-z]/g,'').toUpperCase().split('').sort().join('');
+    }
     const handleGiantCheck = ()=>{
       const w = (giantInput.value || lastGiantValue || '').trim();
       if(!w) { giantResult.textContent = 'Entrez un mot'; giantResult.className = 'giant-wordcheck-result unknown'; return; }
@@ -268,8 +283,20 @@ function bind(){
           giantResult.textContent = `${w} est valide`;
           giantResult.className = 'giant-wordcheck-result valid';
         } else if(r && r.valid === false){
-          giantResult.textContent = `${w} n'est pas valide`;
-          giantResult.className = 'giant-wordcheck-result invalid';
+          // Chercher toutes les anagrammes autorisées
+          const sorted = sortedLetters(w);
+          const anagrams = wordsList.filter(word =>
+            word.length === w.length &&
+            sortedLetters(word) === sorted &&
+            word.toUpperCase() !== w.toUpperCase()
+          );
+          if(anagrams.length > 0){
+            giantResult.innerHTML = `${w} n'est pas valide.<br><span class="anagram-label">Anagrammes autorisées :</span> <strong class="anagram-list">${anagrams.join(', ')}</strong>`;
+            giantResult.className = 'giant-wordcheck-result invalid';
+          } else {
+            giantResult.textContent = `${w} n'est pas valide et aucune anagramme autorisée trouvée.`;
+            giantResult.className = 'giant-wordcheck-result invalid';
+          }
         } else {
           giantResult.textContent = `Impossible de vérifier`;
           giantResult.className = 'giant-wordcheck-result unknown';
@@ -283,7 +310,7 @@ function bind(){
 
   // Logique de recherche de mots
   const lengthInput = $('wordLengthInput');
-  const generateBtn = $('generateLetterBoxes');
+  // const generateBtn = $('generateLetterBoxes');
   const letterBoxesContainer = $('letterBoxesContainer');
   const searchModeRow = $('searchModeRow');
   const searchBtn = $('searchWordsBtn');
@@ -331,7 +358,7 @@ function bind(){
     }
   };
 
-  if(generateBtn && lengthInput && letterBoxesContainer && searchModeRow){
+  if(lengthInput && letterBoxesContainer && searchModeRow){
     const generateBoxes = ()=>{
       const len = parseInt(lengthInput.value) || 0;
       letterBoxesContainer.innerHTML = '';
@@ -362,10 +389,13 @@ function bind(){
         letterBoxesContainer.appendChild(inp);
       }
       searchModeRow.style.display = 'flex';
-      letterBoxesContainer.querySelectorAll('.letter-box')[0].focus();
+      if(len > 0) letterBoxesContainer.querySelectorAll('.letter-box')[0].focus();
     };
-    generateBtn.addEventListener('click', generateBoxes);
+    lengthInput.addEventListener('input', generateBoxes);
+    lengthInput.addEventListener('change', generateBoxes);
     lengthInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') generateBoxes(); });
+    // Génération initiale si valeur présente
+    if(lengthInput.value) generateBoxes();
   }
 
   if(searchBtn) searchBtn.addEventListener('click', handleSearch);

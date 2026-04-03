@@ -77,12 +77,16 @@
             <div id="giantWordCheckResult" class="giant-wordcheck-result"></div>
             <div id="giantOdsStatus" class="giant-ods-status"></div>
             <div class="giant-search-container">
-              <h4>Recherche de mots</h4>
               <div class="search-length-row">
-                <span>Mots de</span>
-                <input id="wordLengthInput" type="number" min="2" max="15" placeholder="X">
-                <span>lettres</span>
-                <button id="generateLetterBoxes" class="btn btn-small">OK</button>
+                <span>Mots de </span>
+                <input id="wordLengthInput" type="number" min="2" max="15" placeholder="X" class="inline-word-length">
+                <span> lettres</span>
+                <button id="resetWordLengthBtn" class="reset-inline-btn" title="Réinitialiser le nombre de lettres" aria-label="Réinitialiser le nombre de lettres">
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 3a7 7 0 1 1-6.32 4" stroke="#ffe600" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="3 3 7 3 7 7" stroke="#ffe600" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
               </div>
               <div id="letterBoxesContainer" class="letter-boxes-container"></div>
               <div class="search-mode-row" id="searchModeRow" style="display:none;">
