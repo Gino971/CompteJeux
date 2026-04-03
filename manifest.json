@@ -1,0 +1,21 @@
+{
+  "name": "Compteur de points",
+  "short_name": "Compteur",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1f2937",
+  "theme_color": "#ffe600",
+  "description": "Compteur de points pour jeux de lettres, yams, scrabble, etc.",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
