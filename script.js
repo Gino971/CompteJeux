@@ -282,8 +282,12 @@ function showTab(name){
   const giantBtn = $('giantWordCheckBtn');
   const giantResult = $('giantWordCheckResult');
   if(giantBtn && giantInput && giantResult){
+    let lastGiantValue = '';
+    giantInput.addEventListener('input', ()=>{ lastGiantValue = giantInput.value; });
+    giantInput.addEventListener('compositionend', ()=>{ lastGiantValue = giantInput.value; });
+    giantBtn.addEventListener('pointerdown', (e)=>{ lastGiantValue = giantInput.value; });
     const handleGiantCheck = ()=>{
-      const w = (giantInput.value||'').trim();
+      const w = (giantInput.value || lastGiantValue || '').trim();
       if(!w) { giantResult.textContent = 'Entrez un mot'; giantResult.className = 'giant-wordcheck-result unknown'; return; }
       checkWord(w).then(r=>{
         if(r && r.valid){
