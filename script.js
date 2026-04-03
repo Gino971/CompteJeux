@@ -6,6 +6,7 @@ const $ = id => document.getElementById(id)
 let state = { available: [], game: [], board: { rounds: [], players: [] }, timer: { duration: 60, remaining: 60, running: false } } // history supprimé
 // ODS wordlist set (loaded from ODS9.txt if present)
 let odsSet = null
+let wordsList = []
 let odsAvailable = false
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
@@ -24,6 +25,7 @@ async function init(){
 
 async function loadODS(){
   odsSet = null
+  wordsList = []
   odsAvailable = false
   try{
     const r = await fetch('ODS9.txt')
@@ -31,7 +33,7 @@ async function loadODS(){
       const txt = await r.text()
       const lines = txt.split(/\r?\n/)
       odsSet = new Set()
-      for(const l of lines){ const w = (l||'').trim(); if(!w) continue; odsSet.add(normalizeWord(w)) }
+      for(const l of lines){ const w = (l||'').trim(); if(!w) continue; wordsList.push(w); odsSet.add(normalizeWord(w)) }
       if(odsSet.size) odsAvailable = true
       return
     }
@@ -41,10 +43,11 @@ async function loadODS(){
     const seed = document.getElementById('seed-ods')
     if(seed){
       const words = (seed.textContent || '').split(/\r?\n/).map(s=>s.trim()).filter(Boolean)
-      if(words.length){ odsSet = new Set(words.map(w=>normalizeWord(w))); odsAvailable = true; return }
+      if(words.length){ wordsList = words; odsSet = new Set(words.map(w=>normalizeWord(w))); odsAvailable = true; return }
     }
   }catch(e){}
   odsSet = null
+  wordsList = []
   odsAvailable = false
 }
 
@@ -298,6 +301,42 @@ function showTab(name){
     };
     giantBtn.addEventListener('click', handleGiantCheck);
     giantInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleGiantCheck() } });
+  }
+
+  // Logique de recherche de mots
+  const lengthInput = $('wordLengthInput');
+  const requiredInput = $('requiredLettersInput');
+  const searchBtn = $('searchWordsBtn');
+  const resultsDiv = $('searchResults');
+  if(searchBtn && lengthInput && requiredInput && resultsDiv){
+    const handleSearch = ()=>{
+      const length = parseInt(lengthInput.value) || 0;
+      const required = (requiredInput.value || '').toLowerCase().replace(/[^a-z]/g, '');
+      if(!odsAvailable || !wordsList.length){
+        resultsDiv.innerHTML = '<p>Liste de mots non disponible</p>';
+        return;
+      }
+      let filtered = wordsList.filter(word => {
+        if(length > 0 && word.length !== length) return false;
+        if(required){
+          for(const letter of required){
+            if(!word.toLowerCase().includes(letter)) return false;
+          }
+        }
+        return true;
+      });
+      if(filtered.length === 0){
+        resultsDiv.innerHTML = '<p>Aucun mot trouvé</p>';
+      } else {
+        resultsDiv.innerHTML = '<ul>' + filtered.slice(0, 100).map(word => `<li>${word}</li>`).join('') + '</ul>';
+        if(filtered.length > 100){
+          resultsDiv.innerHTML += `<p>... et ${filtered.length - 100} autres mots</p>`;
+        }
+      }
+    };
+    searchBtn.addEventListener('click', handleSearch);
+    lengthInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleSearch() } });
+    requiredInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleSearch() } });
   }
 }
 

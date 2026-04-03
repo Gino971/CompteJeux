@@ -103,6 +103,77 @@
   margin-top: 8px;
   text-align: center;
 }
+.giant-search-container {
+  margin-top: 40px;
+  text-align: center;
+}
+.giant-search-container h4 {
+  font-size: 2rem;
+  color: #ffe600;
+  margin-bottom: 20px;
+}
+.search-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.search-options label {
+  font-size: 1.4rem;
+  color: #fff;
+  font-weight: bold;
+}
+.search-options input {
+  font-size: 1.4rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid #ffe600;
+  background: #1f2937;
+  color: #fff;
+  text-align: center;
+}
+.search-options input::placeholder {
+  color: #9ca3af;
+}
+.search-options button {
+  font-size: 1.4rem;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.search-options button:hover {
+  background: #2563eb;
+}
+.search-results {
+  max-height: 400px;
+  overflow-y: auto;
+  background: #1f2937;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+}
+.search-results ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.search-results li {
+  background: #374151;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
 /* Popup défaite Simon centré sur les pads */
 #simon-lose-banner {
   position: absolute;
