@@ -250,34 +250,8 @@ function bind(){
     _modal.addEventListener('click', (ev)=>{ if(ev.target === _modal) hideModal() })
   }
   document.addEventListener('keydown', (ev)=>{ if(ev.key === 'Escape') hideModal() })
-}
 
-function showTab(name){
-  const bw = $('boardWordcheck')
-  // hide all main tabs first
-  const ids = ['listsTab','boardTab','yamsTab','simonTab','timerTab','morpionTab','421Tab','giantCheckTab']
-  ids.forEach(id => { const el = document.getElementById(id); if(!el) return; el.classList.add('hidden') })
-  if(bw) { bw.classList.remove('active'); bw.setAttribute('aria-hidden','true') }
-  // show requested tab
-  if(name === 'lists') {
-    $('listsTab').classList.remove('hidden')
-  } else if(name === 'board') {
-    $('boardTab').classList.remove('hidden')
-    if(bw) { bw.classList.add('active'); bw.setAttribute('aria-hidden','false') }
-  } else if(name === 'yams') {
-    $('yamsTab').classList.remove('hidden')
-  } else if(name === 'simon') {
-    const st = $('simonTab'); if(st) st.classList.remove('hidden')
-  } else if(name === 'morpion') {
-    const mt = $('morpionTab'); if(mt) mt.classList.remove('hidden')
-  } else if(name === '421') {
-    const ht = $('421Tab'); if(ht) ht.classList.remove('hidden')
-  } else if(name === 'timer') {
-    const tt = $('timerTab'); if(tt) tt.classList.remove('hidden')
-  } else if(name === 'giantCheck') {
-    const gt = $('giantCheckTab'); if(gt) gt.classList.remove('hidden')
-  }
-  // Jeux de lettres : logique du vérificateur (copie adaptée du Scrabble)
+  // Jeux de lettres : logique du vérificateur
   const giantInput = $('giantWordCheckInput');
   const giantBtn = $('giantWordCheckBtn');
   const giantResult = $('giantWordCheckResult');
@@ -315,11 +289,53 @@ function showTab(name){
   const searchBtn = $('searchWordsBtn');
   const resultsDiv = $('searchResults');
 
+  const handleSearch = ()=>{
+    if(!letterBoxesContainer) return;
+    const boxes = letterBoxesContainer.querySelectorAll('.letter-box');
+    const len = boxes.length;
+    if(!len){ if(resultsDiv) resultsDiv.innerHTML = '<p>Choisissez un nombre de lettres</p>'; return; }
+    if(!odsAvailable || !wordsList.length){
+      if(resultsDiv) resultsDiv.innerHTML = '<p>Liste de mots non disponible</p>';
+      return;
+    }
+    const mode = (document.querySelector('input[name="searchMode"]:checked') || {}).value || 'exact';
+    const pattern = [];
+    for(let i = 0; i < len; i++){
+      pattern.push((boxes[i].value || '').toUpperCase());
+    }
+    let filtered;
+    if(mode === 'exact'){
+      filtered = wordsList.filter(word => {
+        if(word.length !== len) return false;
+        const upper = word.toUpperCase();
+        for(let i = 0; i < len; i++){
+          if(pattern[i] && upper[i] !== pattern[i]) return false;
+        }
+        return true;
+      });
+    } else {
+      const requiredLetters = pattern.filter(l => l);
+      filtered = wordsList.filter(word => {
+        if(word.length !== len) return false;
+        const upper = word.toUpperCase();
+        for(const letter of requiredLetters){
+          if(!upper.includes(letter)) return false;
+        }
+        return true;
+      });
+    }
+    if(filtered.length === 0){
+      if(resultsDiv) resultsDiv.innerHTML = '<p>Aucun mot trouvé</p>';
+    } else {
+      if(resultsDiv) resultsDiv.innerHTML = '<ul>' + filtered.map(word => `<li>${word}</li>`).join('') + '</ul>';
+    }
+  };
+
   if(generateBtn && lengthInput && letterBoxesContainer && searchModeRow){
     const generateBoxes = ()=>{
       const len = parseInt(lengthInput.value) || 0;
       letterBoxesContainer.innerHTML = '';
-      resultsDiv.innerHTML = '';
+      if(resultsDiv) resultsDiv.innerHTML = '';
       if(len < 2 || len > 15){ searchModeRow.style.display = 'none'; return; }
       for(let i = 0; i < len; i++){
         const inp = document.createElement('input');
@@ -352,49 +368,33 @@ function showTab(name){
     lengthInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') generateBoxes(); });
   }
 
-  if(searchBtn && resultsDiv && letterBoxesContainer){
-    const handleSearch = ()=>{
-      const boxes = letterBoxesContainer.querySelectorAll('.letter-box');
-      const len = boxes.length;
-      if(!len){ resultsDiv.innerHTML = '<p>Choisissez un nombre de lettres</p>'; return; }
-      if(!odsAvailable || !wordsList.length){
-        resultsDiv.innerHTML = '<p>Liste de mots non disponible</p>';
-        return;
-      }
-      const mode = (document.querySelector('input[name="searchMode"]:checked') || {}).value || 'exact';
-      const pattern = [];
-      for(let i = 0; i < len; i++){
-        pattern.push((boxes[i].value || '').toUpperCase());
-      }
-      let filtered;
-      if(mode === 'exact'){
-        filtered = wordsList.filter(word => {
-          if(word.length !== len) return false;
-          const upper = word.toUpperCase();
-          for(let i = 0; i < len; i++){
-            if(pattern[i] && upper[i] !== pattern[i]) return false;
-          }
-          return true;
-        });
-      } else {
-        const requiredLetters = pattern.filter(l => l);
-        filtered = wordsList.filter(word => {
-          if(word.length !== len) return false;
-          const upper = word.toUpperCase();
-          for(const letter of requiredLetters){
-            if(!upper.includes(letter)) return false;
-          }
-          return true;
-        });
-      }
-      if(filtered.length === 0){
-        resultsDiv.innerHTML = '<p>Aucun mot trouvé</p>';
-      } else {
-        resultsDiv.innerHTML = '<ul>' + filtered.map(word => `<li>${word}</li>`).join('') + '</ul>';
-      }
-    };
-    searchBtn.addEventListener('click', handleSearch);
-  }
+  if(searchBtn) searchBtn.addEventListener('click', handleSearch);
+}
+
+function showTab(name){
+  const bw = $('boardWordcheck')
+  // hide all main tabs first
+  const ids = ['listsTab','boardTab','yamsTab','simonTab','timerTab','morpionTab','421Tab','giantCheckTab']
+  ids.forEach(id => { const el = document.getElementById(id); if(!el) return; el.classList.add('hidden') })
+  if(bw) { bw.classList.remove('active'); bw.setAttribute('aria-hidden','true') }
+  // show requested tab
+  if(name === 'lists') {
+    $('listsTab').classList.remove('hidden')
+  } else if(name === 'board') {
+    $('boardTab').classList.remove('hidden')
+    if(bw) { bw.classList.add('active'); bw.setAttribute('aria-hidden','false') }
+  } else if(name === 'yams') {
+    $('yamsTab').classList.remove('hidden')
+  } else if(name === 'simon') {
+    const st = $('simonTab'); if(st) st.classList.remove('hidden')
+  } else if(name === 'morpion') {
+    const mt = $('morpionTab'); if(mt) mt.classList.remove('hidden')
+  } else if(name === '421') {
+    const ht = $('421Tab'); if(ht) ht.classList.remove('hidden')
+  } else if(name === 'timer') {
+    const tt = $('timerTab'); if(tt) tt.classList.remove('hidden')
+  } else if(name === 'giantCheck') {
+    const gt = $('giantCheckTab'); if(gt) gt.classList.remove('hidden')
   }
 }
 
