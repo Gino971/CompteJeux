@@ -66,7 +66,7 @@ if ('serviceWorker' in navigator) {
 
   <div id="boardWordcheck" aria-hidden="true">
     <div class="wordcheck-container">
-      <input id="wordCheckInput" type="text" placeholder="Vérifier mot" aria-label="Vérifier mot" maxlength="15" size="17">
+      <input id="wordCheckInput" type="text" placeholder="Vérifier mot" aria-label="Vérifier mot" maxlength="15" size="17" autocomplete="off">
       <button id="wordCheckBtn" class="btn">Vérifier</button>
       <span id="wordCheckResult" class="small"></span>
       <span id="odsStatus" class="small"></span>
@@ -79,7 +79,7 @@ if ('serviceWorker' in navigator) {
         <section id="giantCheckTab" class="hidden">
           <div class="giant-wordcheck-box">
             <div class="giant-wordcheck-container">
-              <input id="giantWordCheckInput" type="text" placeholder="Vérifier mot" aria-label="Vérifmot" maxlength="15" size="17">
+              <input id="giantWordCheckInput" type="text" placeholder="Vérifier mot" aria-label="Vérifmot" maxlength="15" size="17" autocomplete="off">
               <button id="giantWordCheckBtn" class="btn giant-btn">Vérifier</button>
             </div>
             <div id="giantWordCheckResult" class="giant-wordcheck-result"></div>
