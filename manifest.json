@@ -1,7 +1,7 @@
 {
   "name": "Compteur de points",
   "short_name": "Compteur",
-  "start_url": "./index.html",
+  "start_url": "/CompteJeux/",
   "display": "standalone",
   "background_color": "#1f2937",
   "theme_color": "#ffe600",
