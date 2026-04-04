@@ -11,7 +11,7 @@
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('service-worker.js').catch(function(e){console.log('SW registration failed', e)});
+    navigator.serviceWorker.register('service-worker.js').catch(function(e){console.error('SW registration failed', e)});
   });
 }
 
@@ -301,6 +301,7 @@ function showInstallPrompt() {
     </div>
   </div></div>
 
+
   <div id="fourtwooneWinnerModal" class="modal hidden"><div class="modal-content">
     <h4 id="fourtwooneWinnerTitle">Partie terminée</h4>
     <p id="fourtwooneWinnerText">Le vainqueur est —</p>
@@ -310,10 +311,12 @@ function showInstallPrompt() {
     </div>
   </div></div>
 
+  <!-- Scripts JS principaux -->
   <script src="script.js"></script>
   <script src="simon.js"></script>
   <script src="morpion.js"></script>
   <script src="421.js"></script>
   <script src="timer.js"></script>
+
 </body>
 </html>

@@ -1,3 +1,6 @@
+  // debug banner removed
+  // Lance l'initialisation une fois le DOM chargé
+  window.addEventListener('DOMContentLoaded', init);
   // Gestion du nombre de lettres via le select
   const wordlenSelect = document.getElementById('wordlen-select');
   function updateInputs() {
@@ -157,7 +160,8 @@ function bind(){
   const _tabYams = $('tabYamsBtn'); if(_tabYams) _tabYams.addEventListener('click', ()=>{ renderYams(); showTab('yams') })
   const _tabSimon = $('tabSimonBtn'); if(_tabSimon) _tabSimon.addEventListener('click', ()=> showTab('simon'))
   const _tabMorpion = $('tabMorpionBtn'); if(_tabMorpion) _tabMorpion.addEventListener('click', ()=> showTab('morpion'))
-  const _tab421 = $('tab421Btn'); if(_tab421) _tab421.addEventListener('click', ()=> showTab('421'))
+  const _tab421 = $('tab421Btn');
+  if(_tab421) _tab421.addEventListener('click', ()=> { showTab('421'); });
   const _tabTimer = $('tabTimerBtn'); if(_tabTimer) _tabTimer.addEventListener('click', ()=> showTab('timer'))
   // Bouton reset Yams
   setTimeout(()=>{
@@ -171,7 +175,6 @@ function bind(){
   const _addPlayerInput = $('addPlayerInput')
   if(_addPlayerInput){
     const _submitAdd = (e) => {
-      try{ console.log('submitAdd event', e && e.type, e && (e.key || e.keyCode)) }catch(e){}
       const isEnter = e && (e.key === 'Enter' || e.key === 'Return' || e.keyCode === 13 || e.which === 13)
       if(!isEnter) return
       // prevent double submission from multiple key events
@@ -185,10 +188,10 @@ function bind(){
     _addPlayerInput.addEventListener('keydown', _submitAdd)
     _addPlayerInput.addEventListener('keypress', _submitAdd)
     _addPlayerInput.addEventListener('keyup', _submitAdd)
-    _addPlayerInput.addEventListener('input', (e)=>{ try{ console.log('addPlayerInput input', e.data) }catch(e){} })
+    _addPlayerInput.addEventListener('input', (e)=>{})
     const _addPlayerBtn = $('addPlayerBtn')
     if(_addPlayerBtn){
-      const _btnHandler = (ev) => { try{ console.log('addPlayerBtn event', ev && ev.type) }catch(e){} ev.preventDefault(); const v = (_addPlayerInput.value||'').trim(); if(!v) return; addAvailable(v); _addPlayerInput.value=''; _addPlayerInput.focus(); }
+      const _btnHandler = (ev) => { ev.preventDefault(); const v = (_addPlayerInput.value||'').trim(); if(!v) return; addAvailable(v); _addPlayerInput.value=''; _addPlayerInput.focus(); }
       _addPlayerBtn.addEventListener('click', _btnHandler)
       _addPlayerBtn.addEventListener('touchend', _btnHandler)
       _addPlayerBtn.addEventListener('pointerup', _btnHandler)
@@ -327,6 +330,20 @@ function bind(){
   const giantInput = $('giantWordCheckInput');
   const giantBtn = $('giantWordCheckBtn');
   const giantResult = $('giantWordCheckResult');
+
+  // Désactiver suggestions/autocomplétion et correction automatique du navigateur
+  if(giantInput){
+    try{
+      giantInput.setAttribute('autocomplete','off');
+      giantInput.autocomplete = 'off';
+      giantInput.setAttribute('autocorrect','off');
+      giantInput.setAttribute('autocapitalize','off');
+      giantInput.setAttribute('spellcheck','false');
+      giantInput.spellcheck = false;
+      if(giantInput.form) giantInput.form.setAttribute('autocomplete','off');
+    }catch(e){}
+  }
+
   if(giantBtn && giantInput && giantResult){
     let lastGiantValue = '';
     giantInput.addEventListener('input', ()=>{ lastGiantValue = giantInput.value; });
@@ -343,15 +360,17 @@ function bind(){
           giantResult.textContent = `${w} est valide`;
           giantResult.className = 'giant-wordcheck-result valid';
         } else if(r && r.valid === false){
-          // Chercher toutes les anagrammes autorisées
+          // Chercher toutes les anagrammes autorisées (dédupliquées)
           const sorted = sortedLetters(w);
           const anagrams = wordsList.filter(word =>
             word.length === w.length &&
             sortedLetters(word) === sorted &&
             word.toUpperCase() !== w.toUpperCase()
           );
-          if(anagrams.length > 0){
-            giantResult.innerHTML = `${w} n'est pas valide.<br><span class="anagram-label">Anagrammes autorisées :</span> <strong class="anagram-list">${anagrams.join(', ')}</strong>`;
+          // Dédupliquer en ignorant la casse tout en conservant la première occurrence
+          const uniqueAnagrams = [...new Map(anagrams.map(a => [a.toUpperCase(), a])).values()];
+          if(uniqueAnagrams.length > 0){
+            giantResult.innerHTML = `${w} n'est pas valide.<br><span class="anagram-label">Anagrammes autorisées :</span> <strong class="anagram-list">${uniqueAnagrams.join(', ')}</strong>`;
             giantResult.className = 'giant-wordcheck-result invalid';
           } else {
             giantResult.textContent = `${w} n'est pas valide et aucune anagramme autorisée trouvée.`;
@@ -364,8 +383,9 @@ function bind(){
         try{ giantInput.value=''; giantInput.focus(); }catch(e){}
       })
     };
-    giantBtn.addEventListener('click', handleGiantCheck);
-    giantInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleGiantCheck() } });
+    // Use assignment to ensure a single handler (avoid duplicate listeners)
+    giantBtn.onclick = handleGiantCheck;
+    giantInput.onkeydown = e=>{ if(e.key==='Enter'){ handleGiantCheck() } };
   }
 
   // Logique de recherche de mots
@@ -450,10 +470,8 @@ function showTab(name){
 
 
 function addAvailable(name){
-  try{ console.log('addAvailable called with:', name) }catch(e){}
   const p = { id: uid(), name };
   state.available.push(p);
-  try{ console.log('state.available.length =', state.available.length, 'state.available=', state.available) }catch(e){}
   persistLists();
   try{ renderGeneral(); }catch(e){ try{ console.error('renderGeneral failed', e) }catch(_){} }
   try{ renderGame(); }catch(e){}
@@ -475,7 +493,7 @@ function renderAll(){ try{ renderGeneral() }catch(e){ console.error('renderAll.r
 function renderGeneral(){
   try{
     const el = $('generalTbody');
-    if(!el){ console.log('renderGeneral: #generalTbody not found'); return }
+    if(!el){ return }
     el.innerHTML = state.available.map(p => {
       return `<tr data-id="${p.id}"><td class="name-col">${escapeHtml(p.name)}</td><td class="action-col"><button type="button" class="del" title="Supprimer" aria-label="Supprimer">🗑</button></td></tr>`
     }).join('')
@@ -1011,7 +1029,7 @@ function scheduleRenderYams(focused){
   // Toast helper (non-intrusive notifications)
   function showToast(msg, duration){
     // Toast UI removed: keep a console fallback for debug
-    try{ if(!msg || String(msg).trim() === '') return; console.log('toast:', String(msg)); }catch(e){}
+    try{ if(!msg || String(msg).trim() === '') return; }catch(e){}
   }
 
   // --- Word checker (FFScrabble attempt + fallback) ---

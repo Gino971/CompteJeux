@@ -1331,33 +1331,47 @@ input.board-score[type=number] {
 .die{
   width:84px;
   height:84px;
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.04);
+  background:rgba(255,255,255,0.92); /* fond blanc bien visible */
+  border:3px solid transparent;
   border-radius:12px;
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:34px;
   font-weight:800;
-  color:var(--texte);
+  color:#222;
   -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   will-change: transform;
-  transition: transform 360ms cubic-bezier(.2,.9,.3,1), box-shadow 220ms;
+  transition: box-shadow 220ms;
+}
+
+/* Veined texture for dice (persists after rolls) */
+/* Vein overlay is provided per-face via --vein-svg (see JS) */
+.die.veined{
+  background: linear-gradient(160deg, #fbfbfd 0%, #eef6ff 100%);
+  background-image: var(--vein-svg, none), repeating-linear-gradient(120deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 10px), linear-gradient(140deg, rgba(255,255,255,0.6), rgba(245,247,255,0.6));
+  background-repeat: no-repeat, repeat, repeat;
+  background-size: cover, auto, auto;
+  background-position: center, 0 0, 0 0;
+  border:3px solid rgba(150,150,170,0.18);
+  box-shadow:0 8px 22px rgba(2,6,23,0.12);
+  position: relative;
+  overflow: hidden;
 }
 
 .die.selected{
-  box-shadow:0 10px 30px rgba(59,130,246,0.18);
-  border-color:rgba(59,130,246,0.45);
-  background:linear-gradient(90deg, rgba(59,130,246,0.06), rgba(59,130,246,0.02));
+  /* keep the same background/vein as other dice; only show a subtle border/highlight */
+  box-shadow: 0 0 0 6px rgba(59,130,246,0.08), 0 10px 30px rgba(2,6,23,0.12);
+  border: 5px solid rgba(245, 69, 15, 0.974);
 }
 
 /* Animation de lancer 3D */
-.dice-grid.rolling .die:not(.kept){
-  -webkit-animation: die-roll 420ms cubic-bezier(.22,.9,.32,1) both;
-  animation: die-roll 420ms cubic-bezier(.22,.9,.32,1) both;
+.dice-grid.rolling .die.anim{
+  -webkit-animation: die-roll 900ms cubic-bezier(.22,.9,.32,1) both;
+  animation: die-roll 900ms cubic-bezier(.22,.9,.32,1) both;
   -webkit-transform-origin: center center;
   transform-origin: center center;
 }
@@ -1394,13 +1408,19 @@ input.board-score[type=number] {
   justify-items:center;
 }
 
+.die .pips{
+  position: relative;
+  z-index: 3; /* render pips above veined background */
+  background: transparent;
+}
+
 .die .pip{
   width:10px;
   height:10px;
-  background:var(--texte);
+  background:#222; /* points noirs */
   border-radius:50%;
-  box-shadow:0 2px 6px rgba(2,6,23,0.28);
-  opacity:0.95;
+  box-shadow:0 2px 6px rgba(2,6,23,0.18);
+  opacity:0.98;
   transition:opacity .12s ease, transform .12s ease;
 }
 
@@ -1577,6 +1597,14 @@ td.combo-active-td .combo-cell{
   filter:drop-shadow(0 1px 0 rgba(0,0,0,0.15));
 }
 
+/* Mini-dice row for combos and other places: horizontal line */
+.mini-dice-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-start;
+}
+
 /* Badge de jetons */
 .token-badge{
   display:inline-block;
@@ -1599,50 +1627,57 @@ td.combo-active-td .combo-cell{
   font-weight:700;
 }
 
-  width:25px;
-  height:25px;
-  border-radius:5px;
-  background:#fff;
-  border:1px solid rgba(0,0,0,0.10);
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  grid-template-rows:repeat(3,1fr);
-  padding:3px;
-  box-sizing:border-box;
-}
+/* Correction : bloc orphelin supprimé (empêchait le CSS suivant de s'appliquer) */
 
+.mini-die{
+  display:grid;
+  grid-template-columns:repeat(3,6px);
+  grid-template-rows:repeat(3,6px);
+  gap:3px;
+  padding:6px 8px;
+  align-items:start; /* pips alignés en haut */
+  justify-items:center;
+  background:#fff; /* fond clair pour mini-die */
+  border-radius:6px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.15);
+}
 .mini-die .pip{
-  width:4px;
-  height:4px;
-  background:transparent;
+  width:5px;
+  height:5px;
+  background:#222 !important; /* pips foncés */
   border-radius:50%;
   display:block;
-  margin:auto;
+  margin:0;
   opacity:0;
+  z-index:2;
+  align-self:start; /* placer les pips en haut de chaque cellule */
 }
 
+/* Topbar small dice : (définitions consolidées plus bas) */
+/* Les règles spécifiques au bandeau ont été fusionnées pour éviter les doublons. */
+
 /* Valeurs 1 à 6 */
-.mini-die[data-value="1"] .pip:nth-child(5){ opacity:1; background:var(--fond-principal); }
+.mini-die[data-value="1"] .pip:nth-child(5){ opacity:1; background:#222 !important; }
 .mini-die[data-value="2"] .pip:nth-child(1),
-.mini-die[data-value="2"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal); }
+.mini-die[data-value="2"] .pip:nth-child(9){ opacity:1; background:#222 !important; }
 .mini-die[data-value="3"] .pip:nth-child(1),
 .mini-die[data-value="3"] .pip:nth-child(5),
-.mini-die[data-value="3"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal); }
+.mini-die[data-value="3"] .pip:nth-child(9){ opacity:1; background:#222 !important; }
 .mini-die[data-value="4"] .pip:nth-child(1),
 .mini-die[data-value="4"] .pip:nth-child(3),
 .mini-die[data-value="4"] .pip:nth-child(7),
-.mini-die[data-value="4"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal); }
+.mini-die[data-value="4"] .pip:nth-child(9){ opacity:1; background:#222 !important; }
 .mini-die[data-value="5"] .pip:nth-child(1),
 .mini-die[data-value="5"] .pip:nth-child(3),
 .mini-die[data-value="5"] .pip:nth-child(5),
 .mini-die[data-value="5"] .pip:nth-child(7),
-.mini-die[data-value="5"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal); }
+.mini-die[data-value="5"] .pip:nth-child(9){ opacity:1; background:#222 !important; }
 .mini-die[data-value="6"] .pip:nth-child(1),
 .mini-die[data-value="6"] .pip:nth-child(2),
 .mini-die[data-value="6"] .pip:nth-child(3),
 .mini-die[data-value="6"] .pip:nth-child(7),
 .mini-die[data-value="6"] .pip:nth-child(8),
-.mini-die[data-value="6"] .pip:nth-child(9){ opacity:1; background:var(--fond-principal); }
+.mini-die[data-value="6"] .pip:nth-child(9){ opacity:1; background:#222 !important; }
 
 .combo-mini-dice-cell{
   display:flex;
@@ -1655,7 +1690,7 @@ td.combo-active-td .combo-cell{
   color:#dbeafe;
 }
 
-/* Mini-dés topbar (plus petits) */
+/* Mini-dés topbar (variant consolidée) */
 .mini-dice-topbar{
   display:flex;
   gap:6px;
@@ -1664,45 +1699,42 @@ td.combo-active-td .combo-cell{
 }
 
 .mini-dice-topbar .mini-die{
-  width:18px;
-  height:18px;
+  width:20px;
+  height:20px;
   padding:2px;
   border-radius:4px;
   box-shadow:none;
-  border:1px solid rgba(0,0,0,0.10);
+  border:.3px solid rgba(0,0,0,0.10);
   background:#ffffff;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);
+  gap:0px;
+  align-items:center;
+  justify-items:center;
+}
+.mini-dice-topbar .mini-die .pip{
+  width:6px;
+  height:6px;
+  margin:0;
+  opacity:0;
+  align-self:center;
+  justify-self:center;
+  background:#222;
+  border-radius:50%;
+  transition:opacity .12s ease, transform .12s ease;
 }
 
-.mini-dice-topbar .mini-die .pip{
-  width:2px;
-  height:2px;
+/* allow per-face vein SVG for mini-dice */
+.mini-die.veined, .mini-die.veined[data-value] {
+  background-image: var(--vein-svg, none);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
 /* mêmes patterns que ci‑dessus, mais appliqués à la variante topbar */
-.mini-dice-topbar .mini-die[data-value="1"] .pip:nth-child(5),
-.mini-dice-topbar .mini-die[data-value="2"] .pip:nth-child(1),
-.mini-dice-topbar .mini-die[data-value="2"] .pip:nth-child(9),
-.mini-dice-topbar .mini-die[data-value="3"] .pip:nth-child(1),
-.mini-dice-topbar .mini-die[data-value="3"] .pip:nth-child(5),
-.mini-dice-topbar .mini-die[data-value="3"] .pip:nth-child(9),
-.mini-dice-topbar .mini-die[data-value="4"] .pip:nth-child(1),
-.mini-dice-topbar .mini-die[data-value="4"] .pip:nth-child(3),
-.mini-dice-topbar .mini-die[data-value="4"] .pip:nth-child(7),
-.mini-dice-topbar .mini-die[data-value="4"] .pip:nth-child(9),
-.mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(1),
-.mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(3),
-.mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(5),
-.mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(7),
-.mini-dice-topbar .mini-die[data-value="5"] .pip:nth-child(9),
-.mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(1),
-.mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(2),
-.mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(3),
-.mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(7),
-.mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(8),
-.mini-dice-topbar .mini-die[data-value="6"] .pip:nth-child(9){
-  opacity:1;
-  background:var(--fond-principal);
-}
+/* Le topbar hérite des mêmes sélecteurs `.mini-die[data-value="..."]` définis plus haut. */
 
 /* 5.8 Contrôles principaux 421 (lancers, pot, phase) */
 .fourtwoone-controls{

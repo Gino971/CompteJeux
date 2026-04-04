@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function(){
   const board = document.getElementById('fourTwoOneBoard');
   const rollBtn = document.getElementById('roll421Btn');
-  const resetBtn = document.getElementById('reset421Btn');
+  // Correction : utiliser globalResetBtn si reset421Btn n'existe pas
+  let resetBtn = document.getElementById('reset421Btn');
+  if(!resetBtn) resetBtn = document.getElementById('globalResetBtn');
   // status element removed from DOM; provide a safe fallback object so existing
   // assignments like `status.textContent = ...` do nothing instead of throwing.
   let status = document.getElementById('roll421Status');
@@ -47,7 +49,8 @@ document.addEventListener('DOMContentLoaded', function(){
   // runtime state for rolling
   let rollCount = 0;
   let maxRolls = 3;
-  let dice = ['','',''];
+  // initial dice: three sixes at start
+  let dice = [6,6,6];
   let selected = [false,false,false];
   let currentPlayerIndex = 0;
   let currentRoundResults = {};
@@ -56,6 +59,40 @@ document.addEventListener('DOMContentLoaded', function(){
   let dechargeRounds = 0;
   let justReachedZero = null;
   let justEnteredPhase2 = false;
+
+  // history object for rounds (persisted to localStorage)
+  let history = { _rounds: [] };
+
+  function saveHistory(){
+    try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(history||{_rounds:[]})); }catch(e){}
+  }
+
+  function loadHistory(){
+    try{
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(parsed && typeof parsed === 'object'){
+          history = parsed;
+          if(!Array.isArray(history._rounds)) history._rounds = [];
+          return;
+        }
+      }
+    }catch(e){}
+    history = { _rounds: [] };
+  }
+
+  // sync local `players` array from global `state.game` when main app updates players
+  function updatePlayersFromState(){
+    try{
+      const src = (typeof state !== 'undefined' && Array.isArray(state.game) && state.game.length) ? state.game.slice() : ((window.state && Array.isArray(window.state.game) && window.state.game.length) ? window.state.game.slice() : null);
+      if(Array.isArray(src)) players = src.slice();
+      // ensure tokens/figures reflect players
+      players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0; if(typeof figures[p.id] === 'undefined') figures[p.id] = ''; });
+      for(const k in tokens) if(!players.find(p=>p.id===k)) delete tokens[k];
+      for(const k in figures) if(!players.find(p=>p.id===k)) delete figures[k];
+    }catch(e){}
+  }
 
   function saveTokens(){
     try{ localStorage.setItem(TOKENS_KEY, JSON.stringify(tokens||{})); }catch(e){}
@@ -75,65 +112,114 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // helper: render a single mini-die (3x3 pips) as HTML string
   function miniDieHTML(v) {
-    let html = '<div class="mini-die" data-value="' + (v||0) + '">';
-    for (let i = 0; i < 9; i++) html += '<span class="pip"></span>';
-    html += '</div>';
-    return html;
+    // deterministic small vein SVG per face (seeded RNG), colored and slightly thicker
+    function makeRng(seed){ let s = (seed % 2147483647) || 1; return function(){ s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+    try{
+      const val = Number(v) || 0;
+      const rng = makeRng(1000 + val);
+      const w = 48, h = 48;
+      const paths = [];
+      const palette = ['#8B5CF6','#EC4899','#06B6D4','#F59E0B','#10B981','#EF4444'];
+      const count = 1 + (val % 3) + Math.floor(rng()*2);
+      for(let pi=0; pi<count; pi++){
+        const opacity = (0.18 + rng()*0.32).toFixed(3);
+        const color = palette[Math.abs((val-1 + pi)) % palette.length];
+        const segs = 2 + (val % 3) + Math.floor(rng()*2);
+        let pts = [];
+        for(let s=0;s<=segs;s++){
+          const x = Math.round((s/segs)*w + (rng()*6-3));
+          const y = Math.round(6 + rng()*(h-12));
+          pts.push([x,y]);
+        }
+        let dpath = `M ${pts[0][0]} ${pts[0][1]}`;
+        for(let i=1;i<pts.length;i++){
+          const prev = pts[i-1]; const cur = pts[i];
+          const cx1 = prev[0] + (rng()*12-6);
+          const cy1 = prev[1] + (rng()*12-6);
+          const cx2 = cur[0] + (rng()*12-6);
+          const cy2 = cur[1] + (rng()*12-6);
+          dpath += ` C ${cx1} ${cy1}, ${cx2} ${cy2}, ${cur[0]} ${cur[1]}`;
+        }
+        // thicker strokes for mini-dice; add a soft thicker shadow stroke
+        const sw = 2 + rng()*4;
+        const swShadow = (sw * 1.6).toFixed(2);
+        const swMain = sw.toFixed(2);
+        paths.push(`<path d="${dpath}" fill="none" stroke="${color}" stroke-opacity="${(opacity*0.45).toFixed(3)}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${swShadow}" vector-effect="non-scaling-stroke"/>`);
+        paths.push(`<path d="${dpath}" fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${swMain}" vector-effect="non-scaling-stroke"/>`);
+      }
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' preserveAspectRatio='none'>${paths.join('')}</svg>`;
+      const dataUrl = `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+      let html = '<div class="mini-die veined" data-value="' + (v||0) + '" style="--vein-svg:' + dataUrl + '">';
+      for (let i = 0; i < 9; i++) html += '<span class="pip"></span>';
+      html += '</div>';
+      return html;
+    }catch(e){
+      let html = '<div class="mini-die" data-value="' + (v||0) + '">';
+      for (let i = 0; i < 9; i++) html += '<span class="pip"></span>';
+      html += '</div>';
+      return html;
+    }
   }
   function miniDiceRow(values){ return '<div class="mini-dice-row">' + (values||[]).map(v=>miniDieHTML(v)).join('') + '</div>'; }
   function savePot(){ try{ localStorage.setItem(POT_KEY, JSON.stringify(Number(pot||0))) }catch(e){} }
 
   function renderPhaseUI(){
     try{
-      const phaseEl = document.getElementById('fourtwoonePhaseLabel');
-      const potEl = document.getElementById('fourtwoonePotDisplay');
-      if(phaseEl) phaseEl.textContent = `Phase: ${gamePhase === 1 ? 'Charge' : 'Décharge'}`;
-      if(potEl) potEl.textContent = `Pot: ${pot}`;
-    }catch(e){}
-  }
-  function loadTokens(){
-    try{
-      const raw = localStorage.getItem(TOKENS_KEY);
-      if(raw){
-        const parsed = JSON.parse(raw);
-        if(parsed && typeof parsed === 'object'){
-          for(const k in parsed){ tokens[k] = Number(parsed[k]) || 0 }
-        }
-      }
-    }catch(e){ /* ignore */ }
-    // ensure defaults for current players (start with 0 tokens)
-    players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0; if(typeof figures[p.id] === 'undefined') figures[p.id] = ''; });
-  }
-
-  // simple history storage for rounds (minimal implementation)
-  let history = { _rounds: [] };
-  function saveHistory(){
-    try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(history||{_rounds:[]})); }catch(e){}
-  }
-  function loadHistory(){
-    try{
-      const raw = localStorage.getItem(HISTORY_KEY);
-      if(raw){ const parsed = JSON.parse(raw); if(parsed && typeof parsed === 'object') history = parsed; }
-    }catch(e){}
-    if(!history || typeof history !== 'object') history = { _rounds: [] };
-    if(!Array.isArray(history._rounds)) history._rounds = [];
-  }
-
-  // synchronize `players` array from global `state.game` (if present)
-  function updatePlayersFromState(){
-    try{
-      if(typeof state !== 'undefined' && Array.isArray(state.game) && state.game.length){ players = state.game.slice(); }
-      else if(window.state && Array.isArray(window.state.game) && window.state.game.length){ players = window.state.game.slice(); }
       // ensure tokens/figures exist for each player and cleanup removed keys
       players.forEach(p=>{ if(typeof tokens[p.id] === 'undefined') tokens[p.id] = 0; if(typeof figures[p.id] === 'undefined') figures[p.id] = ''; });
       for(const k in tokens) if(!players.find(p=>p.id===k)) delete tokens[k];
       for(const k in figures) if(!players.find(p=>p.id===k)) delete figures[k];
+      // refresh related UI areas
+      try{ renderPlayerTokens(); }catch(e){}
+      try{ renderCombosTable(); }catch(e){}
     }catch(e){}
   }
   // create a simple die element for the board
   function createDieEl(value, idx){
     const d = document.createElement('div');
     d.className = 'die';
+    // apply persistent veined texture to board dice
+    try{ d.classList.add('veined'); }catch(e){}
+    // generate a randomized SVG vein overlay and assign it to CSS variable --vein-svg
+    try{
+      // deterministic RNG seeded by face value so same face => same veins
+      function makeRng(seed){ let s = (seed % 2147483647) || 1; return function(){ s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+      const val = Number(value) || 0;
+      const rng = makeRng(2000 + val);
+      const w = 160, h = 160;
+      const paths = [];
+        const palette = ['#8B5CF6','#EC4899','#06B6D4','#F59E0B','#10B981','#EF4444'];
+        const count = 2 + (val % 3);
+      for(let pi=0; pi<count; pi++){
+          const opacity = (0.22 + rng()*0.38).toFixed(3);
+          const color = palette[Math.abs((val-1 + pi)) % palette.length];
+        const segs = 3 + (val % 3);
+        let pts = [];
+        for(let s=0;s<=segs;s++){
+          const x = Math.round((s/segs)*w + (rng()*14-7));
+          // distribute Y across face area (not grouped on top) and add small wave
+          const y = Math.round(24 + rng()*(h-48) + Math.sin((s/segs)*Math.PI* (1 + rng())) * (12 + rng()*10));
+          pts.push([x,y]);
+        }
+        let dpath = `M ${pts[0][0]} ${pts[0][1]}`;
+        for(let i=1;i<pts.length;i++){
+          const prev = pts[i-1]; const cur = pts[i];
+          const cx1 = prev[0] + (rng()*20-10);
+          const cy1 = prev[1] + (rng()*18-9);
+          const cx2 = cur[0] + (rng()*20-10);
+          const cy2 = cur[1] + (rng()*18-9);
+          dpath += ` C ${cx1} ${cy1}, ${cx2} ${cy2}, ${cur[0]} ${cur[1]}`;
+        }
+        const sw = 1.5 + rng()*2.5;
+        const swShadow = (sw * 1.4).toFixed(2);
+        const swMain = sw.toFixed(2);
+        paths.push(`<path d="${dpath}" fill="none" stroke="${color}" stroke-opacity="${(opacity*0.45).toFixed(3)}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${swShadow}" vector-effect="non-scaling-stroke"/>`);
+        paths.push(`<path d="${dpath}" fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-linecap="round" stroke-linejoin="round" stroke-width="${swMain}" vector-effect="non-scaling-stroke"/>`);
+      }
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' preserveAspectRatio='none'>${paths.join('')}</svg>`;
+      const dataUrl = `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+      d.style.setProperty('--vein-svg', dataUrl);
+    }catch(e){}
     d.dataset.index = typeof idx === 'number' ? String(idx) : '';
     d.setAttribute('data-value', typeof value !== 'undefined' && value !== '' ? String(value) : '');
     // build 3x3 pip grid
@@ -157,16 +243,16 @@ document.addEventListener('DOMContentLoaded', function(){
     }
     d.appendChild(pips);
     // reflect current kept state if index passed
-    try{
-      if(typeof idx === 'number' && selected[idx]){ d.classList.add('selected'); d.classList.add('kept'); }
-      // allow toggling kept dice by clicking the die
+      try{
+      // selected === dice to be re-rolled (inverse of previous "kept" semantics)
+      if(typeof idx === 'number' && selected[idx]){ d.classList.add('selected'); }
+      // allow toggling which dice will be re-rolled by clicking the die
       d.style.cursor = 'pointer';
       d.addEventListener('click', function(evt){
         try{
           if(typeof idx !== 'number') return;
           selected[idx] = !selected[idx];
           d.classList.toggle('selected', !!selected[idx]);
-          d.classList.toggle('kept', !!selected[idx]);
         }catch(e){}
       });
     }catch(e){}
@@ -423,25 +509,67 @@ document.addEventListener('DOMContentLoaded', function(){
     return 1;
   }
 
-  function rollAnimation(finalVals, duration){
+  // Play a short dice-rattle noise using WebAudio during a roll
+  function playDiceRattle(durationMs){
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const sr = ctx.sampleRate;
+      // short noise buffer (looped) to repeat during the animation
+      const chunkSec = 0.12;
+      const len = Math.max(1, Math.floor(chunkSec * sr));
+      const buffer = ctx.createBuffer(1, len, sr);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<data.length;i++){
+        data[i] = (Math.random()*2 - 1) * (0.6 + Math.random()*0.4);
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      // small random detune to avoid perfectly repeating artifact
+      try{ src.playbackRate.value = 0.9 + Math.random()*0.2; }catch(e){}
+      const biquad = ctx.createBiquadFilter();
+      biquad.type = 'bandpass';
+      biquad.frequency.value = 1200 + Math.random()*800;
+      biquad.Q.value = 0.8 + Math.random()*0.8;
+      const gain = ctx.createGain();
+      // envelope: quick attack, sustain, then release near end
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.9, now + 0.02);
+      // schedule release
+      const total = Math.max(0.08, (durationMs||900)/1000);
+      gain.gain.setValueAtTime(0.9, now + total - 0.08);
+      gain.gain.linearRampToValueAtTime(0.0001, now + total);
+      src.connect(biquad).connect(gain).connect(ctx.destination);
+      src.start(now);
+      // stop and close after duration
+      setTimeout(()=>{ try{ src.stop(); ctx.close(); }catch(e){} }, Math.max(50, durationMs||900) + 150);
+    }catch(e){}
+  }
+
+  function rollAnimation(finalVals, duration, rollingIndices){
     const start = Date.now();
-    const ticks = 12;
-    const interval = Math.max(30, Math.floor((duration||420)/ticks));
+    const ticks = 16;
+    const interval = Math.max(30, Math.floor((duration||900)/ticks));
     let t = 0;
     // add rolling class to enable 3D animation
     if(board) board.classList.add('rolling');
+    // play dice sound (user gesture required - doRoll is triggered by click)
+    try{ playDiceRattle(duration||900); }catch(e){}
     const iv = setInterval(()=>{
       t++;
       const tmp = [rollOnce(), rollOnce(), rollOnce()];
-      // show rolling only for dice that are not kept: kept dice display their current value
+      // rollingIndices provided by caller
+      rollingIndices = Array.isArray(rollingIndices) ? rollingIndices : (rollCount===0? [0,1,2] : (()=>{ const r=[]; for(let i=0;i<3;i++) if(selected[i]) r.push(i); return r; })());
       const tmpShow = tmp.slice();
       for(let i=0;i<3;i++){
-        if(selected[i]){
-          // keep current visible value (prefer `dice[i]`, fall back to finalVals)
+        if(rollingIndices.indexOf(i) === -1){
           tmpShow[i] = (typeof dice[i] !== 'undefined' && dice[i] !== '' && dice[i] !== null) ? dice[i] : (finalVals && Array.isArray(finalVals) ? finalVals[i] : tmp[i]);
         }
       }
       renderDice(tmpShow);
+      // after rendering, mark dice elements that are rolling with class 'anim'
+      try{ Array.prototype.forEach.call(board.children, function(el, i){ el.classList.toggle('anim', rollingIndices.indexOf(i) !== -1); }); }catch(e){}
       if(Date.now() - start > duration || t>=ticks){
         clearInterval(iv);
         renderDice(finalVals);
@@ -449,8 +577,8 @@ document.addEventListener('DOMContentLoaded', function(){
         // remove rolling animation and add a quick pop effect on final faces
         if(board) board.classList.remove('rolling');
         try{
-          Array.prototype.forEach.call(board.children, function(el){ if(!el.classList.contains('kept')) el.classList.add('pop'); });
-          setTimeout(function(){ Array.prototype.forEach.call(board.children, function(el){ if(!el.classList.contains('kept')) el.classList.remove('pop'); }); }, 320);
+          Array.prototype.forEach.call(board.children, function(el){ if(el.classList.contains('anim')) el.classList.add('pop'); });
+          setTimeout(function(){ Array.prototype.forEach.call(board.children, function(el){ el.classList.remove('pop'); el.classList.remove('anim'); }); }, 320);
         }catch(e){}
         if(is421(finalVals)){
           status.textContent = '421 ! Bravo !';
@@ -478,24 +606,27 @@ document.addEventListener('DOMContentLoaded', function(){
       // first roll: roll all
       vals = [rollOnce(), rollOnce(), rollOnce()];
     } else {
-      // reroll dice that are NOT kept (selected == false)
-      for(let i=0;i<3;i++) if(!selected[i]) vals[i] = rollOnce();
+      // reroll only the dice that are selected (selected === will be re-rolled)
+      for(let i=0;i<3;i++) if(selected[i]) vals[i] = rollOnce();
     }
+    // determine which dice indices will be rolled in this action
+    const rollingIndices = (rollCount === 0) ? [0,1,2] : (function(){ const r=[]; for(let i=0;i<3;i++) if(selected[i]) r.push(i); return r; })();
     rollCount++;
     // do NOT clear kept selections after a roll - user keeps chosen dice until they toggle them
-    rollAnimation(vals, 420);
-    // update internal state and UI after short delay when animation completes
+    const animDuration = 900;
+    rollAnimation(vals, animDuration, rollingIndices);
+    // update internal state and UI after animation completes
     setTimeout(()=>{
       dice = vals.slice();
       updateUIAfterRoll();
-    }, 480);
+    }, animDuration + 80);
   }
 
   function updateUIAfterRoll(){
     // update selection visuals
     Array.prototype.forEach.call(board.children, function(el, i){
+      // `selected` now means this die WILL be re-rolled; show a border
       el.classList.toggle('selected', !!selected[i]);
-      el.classList.toggle('kept', !!selected[i]);
     });
     // accept button enabled only after at least one roll and before max rolls
     try{
@@ -647,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function(){
     } else {
       currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
     }
-    dice = ['','',''];
+    dice = [6,6,6];
     renderDice(dice);
     updatePlayerUI();
     try{ if(remainingRollsEl) remainingRollsEl.textContent = String(Math.max(0, maxRolls - rollCount)); }catch(e){}
@@ -675,8 +806,9 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   }
 
-  // init three empty dice
-  renderDice(['','', '']);
+  // init three dice (start with three sixes) and give them a marbled texture
+  renderDice(dice.slice());
+  try{ document.querySelectorAll('#fourTwoOneBoard .die').forEach(d=>d.classList.add('marble')); }catch(e){}
   // load history from storage
   loadHistory();
   // load pot and determine phase
@@ -723,7 +855,16 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // Re-sync players/tokens when the 421 tab is opened
   const tabBtn = document.getElementById('tab421Btn');
-  if(tabBtn){ tabBtn.addEventListener('click', function(){ updatePlayersFromState(); renderPlayerTokens(); renderHistory(false); updatePlayerUI(); }) }
+  if(tabBtn){
+    tabBtn.addEventListener('click', function(){
+      updatePlayersFromState();
+      renderPlayerTokens();
+      renderHistory && renderHistory(false);
+      updatePlayerUI && updatePlayerUI();
+      // Ajout : toujours afficher le tableau des combinaisons avec les dés
+      renderCombosTable && renderCombosTable();
+    });
+  }
 
   // Also sync once on window load (after main app init has run)
   window.addEventListener('load', function(){ updatePlayersFromState(); renderPlayerTokens(); updatePlayerUI(); });
