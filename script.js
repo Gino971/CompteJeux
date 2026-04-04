@@ -79,7 +79,9 @@ function bind(){
         // Génération dynamique des options du select pour le nombre de lettres
         setTimeout(()=>{
           const wordlenSelect = document.getElementById('wordlen-select');
-          if(wordlenSelect && wordlenSelect.options.length === 0){
+            if(wordlenSelect){
+              // Toujours régénérer pour éviter les bugs d'affichage
+              wordlenSelect.innerHTML = '';
             for(let i=2; i<=15; i++){
               const opt = document.createElement('option');
               opt.value = i;
