@@ -79,9 +79,9 @@ function bind(){
         // Génération dynamique des options du select pour le nombre de lettres
         setTimeout(()=>{
           const wordlenSelect = document.getElementById('wordlen-select');
-            if(wordlenSelect){
-              // Toujours régénérer pour éviter les bugs d'affichage
-              wordlenSelect.innerHTML = '';
+          if(wordlenSelect){
+            // Toujours régénérer pour éviter les bugs d'affichage
+            wordlenSelect.innerHTML = '';
             for(let i=2; i<=15; i++){
               const opt = document.createElement('option');
               opt.value = i;
@@ -89,10 +89,18 @@ function bind(){
               if(i === 5) opt.selected = true;
               wordlenSelect.appendChild(opt);
             }
-          }
-          if(wordlenSelect){
+            // Génère les inputs à chaque changement
             wordlenSelect.addEventListener('change', ()=>{
               updateInputs();
+            });
+            // Génère les inputs au chargement (valeur par défaut)
+            updateInputs();
+            // Amélioration mobile : forcer l'ouverture du select sur tap
+            wordlenSelect.addEventListener('touchstart', function(e) {
+              this.focus();
+              // Certains navigateurs mobiles nécessitent un clic programmatique
+              try { this.size = 15; } catch(e){}
+              setTimeout(()=>{ try { this.size = 0; } catch(e){} }, 500);
             });
           }
         }, 200);
