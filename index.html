@@ -41,10 +41,10 @@ function showInstallPrompt() {
 </head>
 
 <body>
-  <div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:#ffe600;color:#222;justify-content:center;align-items:center;padding:12px 0;box-shadow:0 -2px 8px #0002;gap:16px;">
+  <div id="installBanner" class="install-banner">
     <span>Installer cette application sur votre appareil&nbsp;?</span>
-    <button onclick="showInstallPrompt()" style="background:#222;color:#ffe600;border:none;padding:8px 18px;border-radius:6px;font-weight:bold;cursor:pointer;">Installer</button>
-    <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:#222;font-size:20px;line-height:1;cursor:pointer;">×</button>
+    <button onclick="showInstallPrompt()" class="install-btn">Installer</button>
+    <button onclick="this.parentElement.style.display='none'" class="close-banner-btn">×</button>
   </div>
   <div class="topbar">
     <button id="tabYamsBtn" class="btn">Yams</button>
