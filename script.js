@@ -1,3 +1,30 @@
+  // Contrôles + et - pour le nombre de lettres
+  const decrementBtn = document.getElementById('decrementWordLength');
+  const incrementBtn = document.getElementById('incrementWordLength');
+  if(decrementBtn && lengthInput){
+    decrementBtn.addEventListener('click', ()=>{
+      let val = parseInt(lengthInput.value) || 2;
+      val = Math.max(2, val - 1);
+      lengthInput.value = val;
+      lengthInput.dispatchEvent(new Event('input'));
+    });
+  }
+  if(incrementBtn && lengthInput){
+    incrementBtn.addEventListener('click', ()=>{
+      let val = parseInt(lengthInput.value) || 2;
+      val = Math.min(15, val + 1);
+      lengthInput.value = val;
+      lengthInput.dispatchEvent(new Event('input'));
+    });
+  }
+  if(lengthInput){
+    lengthInput.addEventListener('input', ()=>{
+      let val = lengthInput.value.replace(/[^0-9]/g, '');
+      if(val === '' || isNaN(val)) val = '2';
+      val = Math.max(2, Math.min(15, parseInt(val)));
+      lengthInput.value = val;
+    });
+  }
 // Standalone app (no Electron/Capacitor). Uses localStorage only.
 // const STORAGE_KEY = 'scorekeeper_history_v1' // supprimé
 const LISTS_KEY = 'scorekeeper_lists_v1'
