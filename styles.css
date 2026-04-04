@@ -1541,22 +1541,6 @@ td.combo-active-td .combo-cell{
   font-weight:700;
 }
 
-.token-btn{
-  padding:4px 8px;
-  border-radius:6px;
-  border:1px solid rgba(255,255,255,0.04);
-  background:transparent;
-  cursor:pointer;
-}
-
-/* 5.7 Mini-dés (reutilisés dans combos / topbar) */
-.mini-dice-row{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.mini-die{
   width:25px;
   height:25px;
   border-radius:5px;

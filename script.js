@@ -1,28 +1,8 @@
-  // Contrôles + et - pour le nombre de lettres
-  const decrementBtn = document.getElementById('decrementWordLength');
-  const incrementBtn = document.getElementById('incrementWordLength');
-  if(decrementBtn && lengthInput){
-    decrementBtn.addEventListener('click', ()=>{
-      let val = parseInt(lengthInput.value) || 2;
-      val = Math.max(2, val - 1);
-      lengthInput.value = val;
-      lengthInput.dispatchEvent(new Event('input'));
-    });
-  }
-  if(incrementBtn && lengthInput){
-    incrementBtn.addEventListener('click', ()=>{
-      let val = parseInt(lengthInput.value) || 2;
-      val = Math.min(15, val + 1);
-      lengthInput.value = val;
-      lengthInput.dispatchEvent(new Event('input'));
-    });
-  }
-  if(lengthInput){
-    lengthInput.addEventListener('input', ()=>{
-      let val = lengthInput.value.replace(/[^0-9]/g, '');
-      if(val === '' || isNaN(val)) val = '2';
-      val = Math.max(2, Math.min(15, parseInt(val)));
-      lengthInput.value = val;
+  // Gestion du nombre de lettres via le select
+  const wordlenSelect = document.getElementById('wordlen-select');
+  if(wordlenSelect){
+    wordlenSelect.addEventListener('change', ()=>{
+      updateInputs();
     });
   }
 // Standalone app (no Electron/Capacitor). Uses localStorage only.
@@ -96,18 +76,27 @@ function normalizeWord(w){
 }
 
 function bind(){
-      // Bouton reset du nombre de lettres (doit être dans bind pour exister au bon moment)
-      setTimeout(()=>{
-        const resetWordLengthBtn = document.getElementById('resetWordLengthBtn');
-        const lengthInput = document.getElementById('wordLengthInput');
-        if(resetWordLengthBtn && lengthInput){
-          resetWordLengthBtn.addEventListener('click', ()=>{
-            lengthInput.value = '';
-            lengthInput.dispatchEvent(new Event('input'));
-            lengthInput.focus();
-          });
-        }
-      }, 200);
+        // Gestion du select pour le nombre de lettres
+        setTimeout(()=>{
+          const wordlenSelect = document.getElementById('wordlen-select');
+          if(wordlenSelect){
+            wordlenSelect.addEventListener('change', ()=>{
+              updateInputs();
+            });
+          }
+        }, 200);
+        // Bouton reset du nombre de lettres (doit être dans bind pour exister au bon moment)
+        setTimeout(()=>{
+          const resetWordLengthBtn = document.getElementById('resetWordLengthBtn');
+          const wordlenSelect = document.getElementById('wordlen-select');
+          if(resetWordLengthBtn && wordlenSelect){
+            resetWordLengthBtn.addEventListener('click', ()=>{
+              wordlenSelect.value = '5';
+              wordlenSelect.dispatchEvent(new Event('change'));
+              wordlenSelect.focus();
+            });
+          }
+        }, 200);
     // Onglet jeux de lettres
     const _tabGiantCheck = $('tabGiantCheckBtn');
     if(_tabGiantCheck) _tabGiantCheck.addEventListener('click', ()=>showTab('giantCheck'));
