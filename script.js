@@ -448,6 +448,8 @@ function showTab(name){
     const tt = $('timerTab'); if(tt) tt.classList.remove('hidden')
   } else if(name === 'giantCheck') {
     const gt = $('giantCheckTab'); if(gt) gt.classList.remove('hidden')
+    // Toujours régénérer les inputs à l’ouverture de l’onglet jeux de lettres
+    setTimeout(()=>{ if(typeof updateInputs === 'function') updateInputs(); }, 0);
   }
 }
 
