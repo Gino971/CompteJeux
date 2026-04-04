@@ -126,13 +126,7 @@ function bind(){
             }
             // Génère les inputs au chargement (valeur par défaut)
             updateInputs();
-            // Amélioration mobile : forcer l'ouverture du select sur tap
-            wordlenSelect.addEventListener('touchstart', function(e) {
-              this.focus();
-              // Certains navigateurs mobiles nécessitent un clic programmatique
-              try { this.size = 15; } catch(e){}
-              setTimeout(()=>{ try { this.size = 0; } catch(e){} }, 500);
-            });
+            // Suppression du hack mobile : laisser le comportement natif du select
           }
         }, 200);
         // Bouton reset du nombre de lettres (doit être dans bind pour exister au bon moment)
