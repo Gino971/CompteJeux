@@ -76,9 +76,18 @@ function normalizeWord(w){
 }
 
 function bind(){
-        // Gestion du select pour le nombre de lettres
+        // Génération dynamique des options du select pour le nombre de lettres
         setTimeout(()=>{
           const wordlenSelect = document.getElementById('wordlen-select');
+          if(wordlenSelect && wordlenSelect.options.length === 0){
+            for(let i=2; i<=15; i++){
+              const opt = document.createElement('option');
+              opt.value = i;
+              opt.textContent = i;
+              if(i === 5) opt.selected = true;
+              wordlenSelect.appendChild(opt);
+            }
+          }
           if(wordlenSelect){
             wordlenSelect.addEventListener('change', ()=>{
               updateInputs();
