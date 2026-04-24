@@ -760,6 +760,11 @@ input.scrabble,
   padding:0 18px;
   z-index:20;
   box-shadow:0 6px 30px rgba(2,6,23,0.6);
+  /* Allow horizontal scrolling on small screens so buttons remain reachable */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .topbar .btn{
@@ -771,7 +776,14 @@ input.scrabble,
   border-radius:10px;
   font-size:16px;
   line-height:1.1;
+  flex: 0 0 auto; /* prevent buttons from stretching/wrapping */
+  display: inline-flex;
+  align-items: center;
 }
+
+/* Small custom scrollbar for the topbar (subtle) */
+.topbar::-webkit-scrollbar{ height:8px }
+.topbar::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.06); border-radius:8px }
 
 /* 1.2 Formulaire d’ajout de joueur */
 #addPlayerForm{
