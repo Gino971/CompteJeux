@@ -428,10 +428,13 @@ function bind(){
         return true;
       });
     }
-    if(filtered.length === 0){
+    // Dédupliquer les résultats (insensible à la casse) tout en conservant
+    // la première occurrence pour éviter les doublons d'affichage
+    const uniqueFiltered = [...new Map(filtered.map(w => [w.toUpperCase(), w])).values()];
+    if(uniqueFiltered.length === 0){
       if(resultsDiv) resultsDiv.innerHTML = '<p>Aucun mot trouvé</p>';
     } else {
-      if(resultsDiv) resultsDiv.innerHTML = '<ul>' + filtered.map(word => `<li>${word}</li>`).join('') + '</ul>';
+      if(resultsDiv) resultsDiv.innerHTML = '<ul>' + uniqueFiltered.map(word => `<li>${word}</li>`).join('') + '</ul>';
     }
   }
 
