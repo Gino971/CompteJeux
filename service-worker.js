@@ -13,8 +13,8 @@ self.addEventListener('install', event => {
     './timer.js',
     './ODS9.txt',
     './manifest.json',
-    './Icon-192.png',
-    './Icon-512.png',
+    './icon-192.png',
+    './icon-512.png',
     './favicon.ico'
   ];
   event.waitUntil(
