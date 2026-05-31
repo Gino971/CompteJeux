@@ -8,10 +8,18 @@
     const searchModeRow = document.getElementById('searchModeRow');
     const resultsDiv = document.getElementById('searchResults');
     if (!wordlenSelect || !letterBoxesContainer || !searchModeRow) return;
-    const len = parseInt(wordlenSelect.value) || 0;
+    const selectedValue = wordlenSelect.value;
+    const isAllLengths = selectedValue === 'tous';
+    const len = isAllLengths ? 15 : (parseInt(selectedValue) || 0);
+    const exactMode = document.querySelector('input[name="searchMode"][value="exact"]');
+    const anywhereMode = document.querySelector('input[name="searchMode"][value="anywhere"]');
+    const exactModeLabel = exactMode ? exactMode.closest('.mode-label') : null;
     letterBoxesContainer.innerHTML = '';
     if(resultsDiv) resultsDiv.innerHTML = '';
     if(len < 2 || len > 15){ searchModeRow.style.display = 'none'; return; }
+    if(exactMode) exactMode.disabled = isAllLengths;
+    if(exactModeLabel) exactModeLabel.style.display = isAllLengths ? 'none' : '';
+    if(anywhereMode && isAllLengths) anywhereMode.checked = true;
     for(let i = 0; i < len; i++){
       const inp = document.createElement('input');
       inp.type = 'text';
@@ -65,6 +73,7 @@ async function init(){
   // loadHistory() supprimé
   loadBoard()
   renderAll()
+  showTab('giantCheck')
   // renderHistory() supprimé
 }
 
@@ -72,6 +81,15 @@ async function loadODS(){
   odsSet = null
   wordsList = []
   odsAvailable = false
+  try{
+    const embeddedWords = Array.isArray(window.__ODS_WORDS__) ? window.__ODS_WORDS__ : []
+    if(embeddedWords.length){
+      wordsList = embeddedWords.map(w => String(w || '').trim()).filter(Boolean)
+      odsSet = new Set(wordsList.map(w=>normalizeWord(w)))
+      if(odsSet.size) odsAvailable = true
+      if(odsAvailable) return
+    }
+  }catch(e){}
   try{
     const r = await fetch('ODS9.txt')
     if(r && r.ok){
@@ -120,11 +138,15 @@ function bind(){
           if(wordlenSelect){
             // Toujours régénérer pour éviter les bugs d'affichage
             wordlenSelect.innerHTML = '';
+            const allOpt = document.createElement('option');
+            allOpt.value = 'tous';
+            allOpt.textContent = 'Toutes';
+            allOpt.selected = true;
+            wordlenSelect.appendChild(allOpt);
             for(let i=2; i<=15; i++){
               const opt = document.createElement('option');
               opt.value = i;
               opt.textContent = i;
-              if(i === 5) opt.selected = true;
               wordlenSelect.appendChild(opt);
             }
             // Génère les inputs au chargement (valeur par défaut)
@@ -138,7 +160,7 @@ function bind(){
           const wordlenSelect = document.getElementById('wordlen-select');
           if(resetWordLengthBtn && wordlenSelect){
             resetWordLengthBtn.addEventListener('click', ()=>{
-              wordlenSelect.value = '5';
+              wordlenSelect.value = 'tous';
               wordlenSelect.dispatchEvent(new Event('change'));
               wordlenSelect.focus();
             });
@@ -391,54 +413,147 @@ function bind(){
   // Logique de recherche de mots
   // Recherche de mots : handler réutilisé
   const searchBtn = document.getElementById('searchWordsBtn');
+  const searchMoreBtn = document.getElementById('searchMoreResultsBtn');
+  const searchMoreLabel = document.getElementById('searchMoreResultsLabel');
+  const SEARCH_INITIAL_LIMIT = 500;
+  const SEARCH_MORE_STEP = 200;
+  function updateMoreResultsButton(totalCount, visibleTotal) {
+    if(!searchMoreBtn) return;
+    if(!totalCount || !visibleTotal) {
+      searchMoreBtn.style.display = 'none';
+      if(searchMoreLabel) {
+        searchMoreLabel.textContent = '';
+        searchMoreLabel.style.display = 'none';
+      }
+      return;
+    }
+    const hiddenCount = Math.max(0, totalCount - visibleTotal);
+    if(hiddenCount > 0) {
+      searchMoreBtn.textContent = '+';
+      searchMoreBtn.style.display = 'inline-flex';
+      if(searchMoreLabel) {
+        searchMoreLabel.textContent = `Cliquez sur + pour afficher ${Math.min(SEARCH_MORE_STEP, hiddenCount)} mots de plus (${hiddenCount} restants)`;
+        searchMoreLabel.style.display = 'inline';
+      }
+    } else {
+      searchMoreBtn.style.display = 'none';
+      if(searchMoreLabel) {
+        searchMoreLabel.textContent = 'Tous les resultats sont affiches.';
+        searchMoreLabel.style.display = 'inline';
+      }
+    }
+  }
+  function renderGroupedResults(resultsDiv, allResults, visibleTotal, introNote) {
+    const visibleResults = allResults.slice(0, visibleTotal);
+    const hiddenCount = Math.max(0, allResults.length - visibleResults.length);
+    const summaryNote = `<p>${visibleResults.length} mots affiches sur ${allResults.length}.${hiddenCount > 0 ? ` ${hiddenCount} restants, le bouton + en affiche ${Math.min(SEARCH_MORE_STEP, hiddenCount)} de plus.` : ''}</p>`;
+    const groupedWords = new Map();
+    for(const word of visibleResults){
+      const groupKey = word.length;
+      if(!groupedWords.has(groupKey)) groupedWords.set(groupKey, []);
+      groupedWords.get(groupKey).push(word);
+    }
+    const groupedHtml = Array.from(groupedWords.keys())
+      .sort((a, b) => a - b)
+      .map(groupKey => {
+        const words = groupedWords.get(groupKey) || [];
+        const wordsHtml = words.map(word => `<li>${word}</li>`).join('');
+        return `<section class="search-results-group"><div class="search-results-group-header"><h4>${groupKey} lettres</h4></div><ul>${wordsHtml}</ul></section>`;
+      })
+      .join('');
+    resultsDiv.innerHTML = introNote + summaryNote + groupedHtml;
+    updateMoreResultsButton(allResults.length, visibleResults.length);
+  }
   function handleSearch() {
     const letterBoxesContainer = document.getElementById('letterBoxesContainer');
     const resultsDiv = document.getElementById('searchResults');
     if(!letterBoxesContainer) return;
     const boxes = letterBoxesContainer.querySelectorAll('.letter-box');
     const len = boxes.length;
+    const isAllLengths = wordlenSelect && wordlenSelect.value === 'tous';
+    if(searchMoreBtn) searchMoreBtn.style.display = 'none';
     if(!len){ if(resultsDiv) resultsDiv.innerHTML = '<p>Choisissez un nombre de lettres</p>'; return; }
     if(!odsAvailable || !wordsList.length){
       if(resultsDiv) resultsDiv.innerHTML = '<p>Liste de mots non disponible</p>';
       return;
     }
-    const mode = (document.querySelector('input[name="searchMode"]:checked') || {}).value || 'exact';
+    const selectedMode = (document.querySelector('input[name="searchMode"]:checked') || {}).value || 'exact';
+    const mode = isAllLengths ? 'anywhere' : selectedMode;
     const pattern = [];
     for(let i = 0; i < len; i++){
       pattern.push((boxes[i].value || '').toUpperCase());
     }
-    let filtered;
-    if(mode === 'exact'){
-      filtered = wordsList.filter(word => {
-        if(word.length !== len) return false;
-        const upper = word.toUpperCase();
-        for(let i = 0; i < len; i++){
-          if(pattern[i] && upper[i] !== pattern[i]) return false;
+    const seenWords = new Set();
+    const requiredLetters = pattern.filter(l => l);
+    const lengthBuckets = new Map();
+    const matchesWord = mode === 'exact'
+      ? (word) => {
+          if(word.length !== len) return false;
+          const upper = word.toUpperCase();
+          for(let i = 0; i < len; i++){
+            if(pattern[i] && upper[i] !== pattern[i]) return false;
+          }
+          return true;
         }
-        return true;
-      });
-    } else {
-      const requiredLetters = pattern.filter(l => l);
-      filtered = wordsList.filter(word => {
-        if(word.length !== len) return false;
-        const upper = word.toUpperCase();
-        for(const letter of requiredLetters){
-          if(!upper.includes(letter)) return false;
-        }
-        return true;
-      });
+      : (word) => {
+          if(!isAllLengths && word.length !== len) return false;
+          if(isAllLengths && (word.length < 2 || word.length > 15)) return false;
+          const upper = word.toUpperCase();
+          for(const letter of requiredLetters){
+            if(!upper.includes(letter)) return false;
+          }
+          return true;
+        };
+    for(const word of wordsList){
+      if(!matchesWord(word)) continue;
+      const dedupeKey = word.toUpperCase();
+      if(seenWords.has(dedupeKey)) continue;
+      seenWords.add(dedupeKey);
+      if(isAllLengths){
+        const groupKey = word.length;
+        if(!lengthBuckets.has(groupKey)) lengthBuckets.set(groupKey, []);
+        lengthBuckets.get(groupKey).push(word);
+      } else {
+        if(!lengthBuckets.has(len)) lengthBuckets.set(len, []);
+        lengthBuckets.get(len).push(word);
+      }
     }
-    // Dédupliquer les résultats (insensible à la casse) tout en conservant
-    // la première occurrence pour éviter les doublons d'affichage
-    const uniqueFiltered = [...new Map(filtered.map(w => [w.toUpperCase(), w])).values()];
+    const uniqueFiltered = isAllLengths
+      ? Array.from(lengthBuckets.keys()).sort((a, b) => a - b).flatMap(groupKey => lengthBuckets.get(groupKey) || [])
+      : (lengthBuckets.get(len) || []);
     if(uniqueFiltered.length === 0){
       if(resultsDiv) resultsDiv.innerHTML = '<p>Aucun mot trouvé</p>';
     } else {
-      if(resultsDiv) resultsDiv.innerHTML = '<ul>' + uniqueFiltered.map(word => `<li>${word}</li>`).join('') + '</ul>';
+      if(resultsDiv) {
+        if(isAllLengths){
+          const initialVisibleCount = Math.min(SEARCH_INITIAL_LIMIT, uniqueFiltered.length);
+          const introNote = uniqueFiltered.length > SEARCH_INITIAL_LIMIT
+            ? `<p>Affichage initial de ${SEARCH_INITIAL_LIMIT} mots, en commençant par les mots les plus courts.</p>`
+            : '';
+          resultsDiv.__allResults = uniqueFiltered;
+          resultsDiv.__visibleTotal = initialVisibleCount;
+          resultsDiv.__introNote = introNote;
+          renderGroupedResults(resultsDiv, uniqueFiltered, initialVisibleCount, introNote);
+        } else {
+          delete resultsDiv.__allResults;
+          delete resultsDiv.__visibleTotal;
+          delete resultsDiv.__introNote;
+          updateMoreResultsButton(0, 0);
+          resultsDiv.innerHTML = '<p>' + uniqueFiltered.length + ' mots trouves.</p><ul>' + uniqueFiltered.map(word => `<li>${word}</li>`).join('') + '</ul>';
+        }
+      }
     }
   }
 
-  if(searchBtn) searchBtn.addEventListener('click', handleSearch);
+  const searchResultsDiv = document.getElementById('searchResults');
+  if(searchBtn) searchBtn.onclick = handleSearch;
+  if(searchMoreBtn) {
+    searchMoreBtn.onclick = () => {
+      if(!searchResultsDiv || !searchResultsDiv.__allResults || !searchResultsDiv.__visibleTotal) return;
+      searchResultsDiv.__visibleTotal = Math.min(searchResultsDiv.__allResults.length, searchResultsDiv.__visibleTotal + SEARCH_MORE_STEP);
+      renderGroupedResults(searchResultsDiv, searchResultsDiv.__allResults, searchResultsDiv.__visibleTotal, searchResultsDiv.__introNote || '');
+    };
+  }
 }
 
 function showTab(name){

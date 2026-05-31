@@ -334,6 +334,16 @@
   cursor: pointer;
   transition: background 0.2s;
 }
+#searchMoreResultsBtn {
+  min-width: 52px;
+  padding: 12px 18px;
+  white-space: nowrap;
+}
+.search-more-label {
+  color: #dbeafe;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
 .search-mode-row button:hover {
   background: #2563eb;
 }
@@ -360,6 +370,26 @@
   border-radius: 4px;
   font-size: 1.2rem;
   font-weight: bold;
+}
+.search-results-group {
+  margin-top: 18px;
+}
+.search-results-group:first-of-type {
+  margin-top: 0;
+}
+.search-results-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.search-results-group h4 {
+  margin: 0;
+}
+.search-results-more {
+  margin-top: 0;
+  flex-shrink: 0;
 }
 /* Popup défaite Simon centré sur les pads */
 #simon-lose-banner {

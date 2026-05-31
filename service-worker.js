@@ -1,5 +1,5 @@
 
-const CACHE_VERSION = 'v3'; // Incrémente à chaque déploiement
+const CACHE_VERSION = 'v4'; // Incrémente à chaque déploiement
 const CACHE_NAME = 'compteur-' + CACHE_VERSION;
 self.addEventListener('install', event => {
   const assets = [

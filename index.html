@@ -129,6 +129,8 @@ function showInstallPrompt() {
                 <label class="mode-label"><input type="radio" name="searchMode" value="exact" checked> Emplacement exact</label>
                 <label class="mode-label"><input type="radio" name="searchMode" value="anywhere"> N'importe où</label>
                 <button id="searchWordsBtn" class="btn">Rechercher</button>
+                <button id="searchMoreResultsBtn" class="btn" style="display:none;">+</button>
+                <span id="searchMoreResultsLabel" class="search-more-label" style="display:none;"></span>
               </div>
               <div id="searchResults" class="search-results"></div>
             </div>
@@ -289,6 +291,11 @@ function showInstallPrompt() {
   <script id="seed-board" type="application/json">{"rounds":[],"players":[]}</script>
   <script id="seed-ods" type="text/plain">AA
 
+  </script>
+  <script>
+  if (window.location.protocol === 'file:') {
+    document.write('<script src="ods-data.js"><\/script>');
+  }
   </script>
 
   <div id="endGameModal" class="modal hidden"><div class="modal-content">
