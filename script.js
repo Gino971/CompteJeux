@@ -8,6 +8,7 @@
     const searchModeRow = document.getElementById('searchModeRow');
     const resultsDiv = document.getElementById('searchResults');
     if (!wordlenSelect || !letterBoxesContainer || !searchModeRow) return;
+    const existingValues = Array.from(letterBoxesContainer.querySelectorAll('.letter-box')).map((input) => input.value);
     const selectedValue = wordlenSelect.value;
     const isAllLengths = selectedValue === 'tous';
     const len = isAllLengths ? 15 : (parseInt(selectedValue) || 0);
@@ -26,6 +27,11 @@
       inp.maxLength = 1;
       inp.className = 'letter-box';
       inp.setAttribute('data-pos', i);
+      const preservedValue = String(existingValues[i] || '').toUpperCase().replace(/[^A-Z]/g, '');
+      if(preservedValue){
+        inp.value = preservedValue;
+        inp.classList.add('filled');
+      }
       inp.addEventListener('input', function(){
         this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '');
         if(this.value) this.classList.add('filled');
@@ -45,7 +51,11 @@
       letterBoxesContainer.appendChild(inp);
     }
     searchModeRow.style.display = 'flex';
-    if(len > 0) letterBoxesContainer.querySelectorAll('.letter-box')[0].focus();
+    if(len > 0){
+      const boxes = letterBoxesContainer.querySelectorAll('.letter-box');
+      const firstEmpty = Array.from(boxes).find((box) => !box.value);
+      (firstEmpty || boxes[Math.min(existingValues.length, len) - 1] || boxes[0]).focus();
+    }
   }
 
   if(wordlenSelect){
@@ -160,6 +170,13 @@ function bind(){
           const wordlenSelect = document.getElementById('wordlen-select');
           if(resetWordLengthBtn && wordlenSelect){
             resetWordLengthBtn.addEventListener('click', ()=>{
+              const letterBoxesContainer = document.getElementById('letterBoxesContainer');
+              if(letterBoxesContainer){
+                letterBoxesContainer.querySelectorAll('.letter-box').forEach((input) => {
+                  input.value = '';
+                  input.classList.remove('filled');
+                });
+              }
               wordlenSelect.value = 'tous';
               wordlenSelect.dispatchEvent(new Event('change'));
               wordlenSelect.focus();
